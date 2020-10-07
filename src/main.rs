@@ -9,6 +9,8 @@ mod object_reader;
 use object_reader::*;
 mod property;
 use property::*;
+mod chunks;
+use chunks::*;
 
 pub(crate) mod result;
 use result::{InternalError, OgawaError, ParsingError, Result, UserError};
@@ -54,158 +56,6 @@ fn is_empty_data(value: u64) -> bool {
 }
 fn address_from_child(child: u64) -> u64 {
     child & INVALID_GROUP
-}
-
-#[derive(Debug, Clone)]
-struct Group {
-    position: u64,
-    child_count: u64, //needs to be a separate variable from the length of the children vec
-    children: Vec<u64>,
-}
-
-impl Group {
-    fn load(group_pos: u64, is_light: bool, reader: &mut BufReader<File>) -> Result<Group> {
-        if is_empty_group(group_pos) {
-            return Ok(Group {
-                position: 0,
-                child_count: 0,
-                children: vec![],
-            });
-        }
-
-        reader.seek(SeekFrom::Start(group_pos))?;
-
-        let child_count = reader.read_u64::<LittleEndian>()?;
-        if child_count > 123456 /*TODO(max): replace with file size / 8?*/|| child_count == 0 {
-            return Ok(Group {
-                position: group_pos,
-                child_count: 0,
-                children: vec![],
-            });
-        }
-
-        // load child info
-        let children = if !is_light || child_count < 9 {
-            (0..child_count)
-                .map(|_| reader.read_u64::<LittleEndian>().map_err(|err| err.into()))
-                .collect::<Result<Vec<_>>>()?
-        } else {
-            // special case for lights
-            vec![]
-        };
-
-        Ok(Group {
-            position: group_pos,
-            child_count,
-            children,
-        })
-    }
-    fn is_child_group(&self, index: usize) -> bool {
-        index < self.children.len() && is_group(self.children[index])
-    }
-    fn is_child_data(&self, index: usize) -> bool {
-        index < self.children.len() && is_data(self.children[index])
-    }
-    fn is_empty_child_group(&self, index: usize) -> bool {
-        index < self.children.len() && is_empty_group(self.children[index])
-    }
-    fn is_empty_child_data(&self, index: usize) -> bool {
-        index < self.children.len() && is_empty_data(self.children[index])
-    }
-    fn is_light(&self) -> bool {
-        self.child_count != 0 && self.children.is_empty()
-    }
-
-    fn load_group(
-        &self,
-        reader: &mut BufReader<File>,
-        index: usize,
-        is_light: bool,
-    ) -> Result<Group> {
-        if self.is_light() {
-            if index < (self.child_count as usize) {
-                reader.seek(SeekFrom::Start(self.position + 8 * (index as u64) + 8))?;
-                let child_pos = reader.read_u64::<LittleEndian>()?;
-
-                if (child_pos & EMPTY_DATA) == 0 {
-                    Ok(Group::load(child_pos, is_light, reader)?)
-                } else {
-                    Err(InternalError::DataReadAsGroup.into())
-                }
-            } else {
-                Err(InternalError::OutOfBounds.into())
-            }
-        } else if is_group(self.children[index]) {
-            Ok(Group::load(self.children[index], is_light, reader)?)
-        } else {
-            Err(InternalError::DataReadAsGroup.into())
-        }
-    }
-
-    fn load_data(&self, reader: &mut BufReader<File>, index: usize) -> Result<Data> {
-        if self.is_light() {
-            if index < (self.child_count as usize) {
-                reader.seek(SeekFrom::Start(self.position + 8 * (index as u64) + 8))?;
-                let child_pos = reader.read_u64::<LittleEndian>()?;
-                if (child_pos & EMPTY_DATA) != 0 {
-                    Ok(Data::load(child_pos, reader)?)
-                } else {
-                    Err(InternalError::GroupReadAsData.into())
-                }
-            } else {
-                Err(InternalError::OutOfBounds.into())
-            }
-        } else if is_data(self.children[index]) {
-            Ok(Data::load(self.children[index], reader)?)
-        } else {
-            Err(InternalError::GroupReadAsData.into())
-        }
-    }
-}
-
-#[derive(Debug)]
-pub struct Data {
-    position: u64,
-    size: u64,
-}
-
-impl Data {
-    fn load(position: u64, reader: &mut BufReader<File>) -> Result<Data> {
-        let position = address_from_child(position);
-
-        let size = if position != 0 {
-            reader.seek(SeekFrom::Start(position))?;
-            let size = reader.read_u64::<LittleEndian>()?;
-            //TODO(max): return error if read size is larger than file size
-            size
-        } else {
-            0
-        };
-
-        Ok(Data { position, size })
-    }
-
-    fn read(&self, offset: u64, reader: &mut BufReader<File>, buffer: &mut [u8]) -> Result<()> {
-        if self.size == 0
-        /* || offset + size > file_size*/
-        {
-            return Err(ParsingError::InvalidAlembicFile.into());
-        }
-
-        reader.seek(SeekFrom::Start(self.position + offset + 8))?;
-        reader.read(buffer)?;
-
-        Ok(())
-    }
-    fn read_u32(&self, offset: u64, reader: &mut BufReader<File>) -> Result<u32> {
-        if self.size != 4 {
-            return Err(ParsingError::InvalidAlembicFile.into());
-        }
-
-        reader.seek(SeekFrom::Start(self.position + offset))?;
-        let value = reader.read_u32::<LittleEndian>()?;
-        Ok(value)
-    }
 }
 
 #[repr(u32)]
@@ -286,7 +136,7 @@ struct TimeSampling {
 }
 
 fn read_time_samplings_and_max(
-    data: &Data,
+    data: &DataChunk,
     reader: &mut BufReader<File>,
 ) -> Result<(Vec<Rc<TimeSampling>>, Vec<i64>)> {
     let mut buffer = vec![0u8; data.size as usize];
@@ -332,16 +182,11 @@ fn read_time_samplings_and_max(
     Ok((out_time_samples, out_max_samples))
 }
 
-fn print_debug_info(root_group: &Group, reader: &mut BufReader<File>) -> Result<()> {
-    enum Kaas {
-        Data(Data),
-        Group(Group),
-    }
-
+fn print_debug_info(root_group: &GroupChunk, reader: &mut BufReader<File>) -> Result<()> {
     let mut total_data_size = 0;
     let mut data_count = 0;
     let mut group_count = 0;
-    let mut stack = vec![(0, 0, Kaas::Group(root_group.clone()))];
+    let mut stack = vec![(0, 0, Chunk::Group(root_group.clone()))];
 
     loop {
         if stack.len() == 0 {
@@ -356,13 +201,13 @@ fn print_debug_info(root_group: &Group, reader: &mut BufReader<File>) -> Result<
         }
 
         match &current {
-            Kaas::Group(group) => {
+            Chunk::Group(group) => {
                 println!(
                     "({}) group: 0x{:016x} ({} children)",
                     index, group.position, group.child_count
                 );
             }
-            Kaas::Data(data) => {
+            Chunk::Data(data) => {
                 println!(
                     "({}) data: 0x{:016x} ({} bytes)",
                     index, data.position, data.size
@@ -370,18 +215,18 @@ fn print_debug_info(root_group: &Group, reader: &mut BufReader<File>) -> Result<
             }
         }
 
-        if let Kaas::Group(current_group) = &current {
+        if let Chunk::Group(current_group) = &current {
             for (i, &child) in current_group.children.iter().enumerate().rev() {
                 if is_group(child) {
                     let group = current_group.load_group(reader, i, false)?;
-                    stack.push((indent + 1, i, Kaas::Group(group)));
+                    stack.push((indent + 1, i, Chunk::Group(group)));
                 } else {
                     let data = current_group.load_data(reader, i)?;
 
                     total_data_size += data.size;
                     data_count += 1;
 
-                    stack.push((indent + 1, i, Kaas::Data(data)));
+                    stack.push((indent + 1, i, Chunk::Data(data)));
                 }
             }
         }
@@ -419,7 +264,7 @@ fn main() -> Result<(), OgawaError> {
     }
     let group_pos = file.read_u64::<LittleEndian>()?;
 
-    let root_group = Group::load(group_pos, false, &mut file)?;
+    let root_group = GroupChunk::load(group_pos, false, &mut file)?;
 
     if root_group.child_count <= 5
         || !is_data(root_group.children[0] /*  version */)
@@ -502,15 +347,33 @@ fn main() -> Result<(), OgawaError> {
 
         let properties = current.properties().unwrap();
 
-        for i in 0..properties.sub_property_count() {
-            let prop =
-                properties.load_sub_property(i, &mut file, &indexed_meta_data, &time_samplings)?;
+        let mut prop_stack = vec![properties];
 
-            match prop {
-                PropertyReader::Array(_) => println!("array!"),
-                PropertyReader::Compound(_) => println!("compound!"),
-                PropertyReader::Scalar(_) => println!("scalar!"),
-            };
+        loop {
+            if prop_stack.is_empty() {
+                break;
+            }
+
+            let properties = prop_stack.pop().unwrap();
+            for i in 0..properties.sub_property_count() {
+                let prop = properties.load_sub_property(
+                    i,
+                    &mut file,
+                    &indexed_meta_data,
+                    &time_samplings,
+                )?;
+
+                let prop_name = prop.name().to_owned();
+                let typename = match prop {
+                    PropertyReader::Array(_) => "array",
+                    PropertyReader::Compound(compound_reader) => {
+                        prop_stack.push(Rc::new(compound_reader));
+                        "compound"
+                    }
+                    PropertyReader::Scalar(_) => "scalar",
+                };
+                println!("prop({}): {}", typename, prop_name);
+            }
         }
     }
 

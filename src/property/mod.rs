@@ -24,6 +24,15 @@ pub(crate) enum PropertyReader {
     Compound(CompoundPropertyReader),
     Scalar(ScalarPropertyReader),
 }
+impl PropertyReader {
+    pub(crate) fn name(&self) -> &str {
+        match self {
+            Self::Array(r) => r.name(),
+            Self::Compound(r) => r.name(),
+            Self::Scalar(r) => r.name(),
+        }
+    }
+}
 
 #[derive(Debug, Clone)]
 pub(crate) struct PropertyHeader {

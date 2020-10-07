@@ -56,7 +56,7 @@ impl MetaData {
 }
 
 pub(crate) fn read_indexed_meta_data(
-    data: &crate::Data,
+    data: &crate::DataChunk,
     reader: &mut BufReader<File>,
 ) -> Result<Vec<MetaData>> {
     let mut output = vec![MetaData::default()];

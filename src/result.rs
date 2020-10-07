@@ -1,16 +1,16 @@
 use thiserror::Error;
 #[derive(Error, Debug)]
 pub enum InternalError {
-    GroupReadAsData,
-    DataReadAsGroup,
+    GroupChunkReadAsDataChunk,
+    DataChunkReadAsGroupChunk,
     OutOfBounds,
     Unreachable,
 }
 impl std::fmt::Display for InternalError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            InternalError::GroupReadAsData => write!(f, "Group read as data."),
-            InternalError::DataReadAsGroup => write!(f, "Data read as group."),
+            InternalError::GroupChunkReadAsDataChunk => write!(f, "GroupChunk read as data."),
+            InternalError::DataChunkReadAsGroupChunk => write!(f, "DataChunk read as group."),
             InternalError::OutOfBounds => write!(f, "Out of bounds access."),
             InternalError::Unreachable => write!(f, "Unreachable code was reached."),
         }

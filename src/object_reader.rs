@@ -19,14 +19,14 @@ pub(crate) struct ObjectHeader {
 #[derive(Debug)]
 pub(crate) struct ObjectReader {
     pub(crate) header: Rc<ObjectHeader>,
-    pub(crate) group: Rc<Group>,
+    pub(crate) group: Rc<GroupChunk>,
     pub(crate) cp_reader: Option<Rc<CompoundPropertyReader>>,
     pub(crate) children: Vec<ObjectHeader>,
     pub(crate) child_map: HashMap<String, usize>,
 }
 impl ObjectReader {
     pub(crate) fn new(
-        group: Rc<Group>,
+        group: Rc<GroupChunk>,
         parent_name: &str,
         reader: &mut BufReader<File>,
         indexed_meta_data: &Vec<MetaData>,
@@ -104,7 +104,7 @@ impl ObjectReader {
 }
 
 fn read_object_headers(
-    group: &Group,
+    group: &GroupChunk,
     index: usize,
     parent_name: &str,
     reader: &mut BufReader<File>,

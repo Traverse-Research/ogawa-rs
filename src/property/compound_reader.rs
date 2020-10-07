@@ -10,7 +10,7 @@ use crate::*;
 
 #[derive(Debug)]
 pub(crate) struct CompoundPropertyReader {
-    pub(crate) group: Rc<Group>,
+    pub(crate) group: Rc<GroupChunk>,
     pub(crate) property_headers: Vec<PropertyHeader>,
     pub(crate) sub_properties: HashMap<String, usize>,
     pub(crate) header: PropertyHeader,
@@ -18,7 +18,7 @@ pub(crate) struct CompoundPropertyReader {
 
 impl CompoundPropertyReader {
     pub(crate) fn new(
-        group: Rc<Group>,
+        group: Rc<GroupChunk>,
         meta_data: MetaData,
         reader: &mut BufReader<File>,
         indexed_meta_data: &Vec<MetaData>,
@@ -68,6 +68,10 @@ impl CompoundPropertyReader {
         })
     }
 
+    pub(crate) fn name(&self) -> &str {
+        &self.header.name
+    }
+
     pub(crate) fn find_sub_property_index(&self, name: &str) -> Option<usize> {
         self.sub_properties.get(name).copied()
     }
@@ -106,7 +110,7 @@ impl CompoundPropertyReader {
 }
 
 fn read_property_headers(
-    group: &Group,
+    group: &GroupChunk,
     index: usize,
     reader: &mut BufReader<File>,
     indexed_meta_data: &Vec<MetaData>,
