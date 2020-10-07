@@ -7,11 +7,11 @@ use std::rc::Rc;
 
 mod object_reader;
 use object_reader::*;
-mod cp_reader;
-use cp_reader::*;
+mod property;
+use property::*;
 
 pub(crate) mod result;
-use result::{InternalError, OgawaError, ParsingError, Result};
+use result::{InternalError, OgawaError, ParsingError, Result, UserError};
 
 mod metadata;
 use metadata::MetaData;
@@ -209,7 +209,7 @@ impl Data {
 }
 
 #[repr(u32)]
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 enum PodType {
     Boolean = 0,
     U8,
@@ -266,7 +266,7 @@ impl TryFrom<u32> for PodType {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct DataType {
     pod_type: PodType,
     extent: u8,
@@ -501,20 +501,16 @@ fn main() -> Result<(), OgawaError> {
         }
 
         let properties = current.properties().unwrap();
-        let property_type = properties.header.property_type;
-        match property_type {
-            PropertyType::Compound => {
-                println!("Compound");
-                for property_header in properties.property_headers.iter() {
-                    println!("subprop type: {:?}", property_header.property_type);
-                }
-            }
-            PropertyType::Scalar => {
-                println!("Scalar");
-            }
-            PropertyType::Array => {
-                println!("Array");
-            }
+
+        for i in 0..properties.sub_property_count() {
+            let prop =
+                properties.load_sub_property(i, &mut file, &indexed_meta_data, &time_samplings)?;
+
+            match prop {
+                PropertyReader::Array(_) => println!("array!"),
+                PropertyReader::Compound(_) => println!("compound!"),
+                PropertyReader::Scalar(_) => println!("scalar!"),
+            };
         }
     }
 

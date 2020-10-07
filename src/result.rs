@@ -32,12 +32,27 @@ impl std::fmt::Display for ParsingError {
 }
 
 #[derive(Error, Debug)]
+pub enum UserError {
+    OutOfBounds,
+}
+impl std::fmt::Display for UserError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            UserError::OutOfBounds => write!(f, "OutOfBounds"),
+        }
+    }
+}
+
+#[derive(Error, Debug)]
 pub enum OgawaError {
     #[error("Internal error {0}")]
     InternalError(#[from] InternalError),
 
     #[error("Parsing error {0}")]
     ParsingError(#[from] ParsingError),
+
+    #[error("User error {0}")]
+    UserError(#[from] UserError),
 
     #[error("I/O error {0}")]
     IoError(#[from] std::io::Error),

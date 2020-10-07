@@ -5,31 +5,8 @@ use std::rc::Rc;
 use std::fs::File;
 use std::io::BufReader;
 
+use super::{PropertyReader, PropertyType};
 use crate::*;
-
-#[derive(Debug, PartialEq, Clone, Copy)]
-pub(crate) enum PropertyType {
-    Compound,
-    Scalar,
-    Array,
-}
-
-#[derive(Debug)]
-pub(crate) struct PropertyHeader {
-    pub(crate) name: String,
-    pub(crate) property_type: PropertyType,
-    pub(crate) meta_data: MetaData,
-    pub(crate) data_type: DataType,
-    pub(crate) time_sampling: Option<Rc<TimeSampling>>,
-
-    //friends?
-    pub(crate) is_scalar_like: bool,
-    pub(crate) is_homogenous: bool,
-    pub(crate) next_sample_index: u32,
-    pub(crate) first_changed_index: u32,
-    pub(crate) last_changed_index: u32,
-    pub(crate) time_sampling_index: u32,
-}
 
 #[derive(Debug)]
 pub(crate) struct CompoundPropertyReader {
@@ -88,6 +65,42 @@ impl CompoundPropertyReader {
             property_headers,
             sub_properties,
             header,
+        })
+    }
+
+    pub(crate) fn find_sub_property_index(&self, name: &str) -> Option<usize> {
+        self.sub_properties.get(name).copied()
+    }
+    pub(crate) fn sub_property_count(&self) -> usize {
+        self.property_headers.len()
+    }
+    pub(crate) fn load_sub_property(
+        &self,
+        index: usize,
+        reader: &mut BufReader<File>,
+        indexed_meta_data: &Vec<MetaData>,
+        time_samplings: &Vec<Rc<TimeSampling>>,
+    ) -> Result<PropertyReader> {
+        let header = self
+            .property_headers
+            .get(index)
+            .ok_or(UserError::OutOfBounds)?;
+
+        let group = Rc::new(self.group.load_group(reader, index, false)?);
+        Ok(match header.property_type {
+            PropertyType::Array => {
+                PropertyReader::Array(ArrayPropertyReader::new(group, header.clone()))
+            }
+            PropertyType::Compound => PropertyReader::Compound(CompoundPropertyReader::new(
+                group,
+                header.meta_data.clone(),
+                reader,
+                indexed_meta_data,
+                time_samplings,
+            )?),
+            PropertyType::Scalar => {
+                PropertyReader::Scalar(ScalarPropertyReader::new(group, header.clone()))
+            }
         })
     }
 }

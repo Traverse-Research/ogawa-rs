@@ -5,8 +5,8 @@ use std::rc::Rc;
 use std::fs::File;
 use std::io::BufReader;
 
-use crate::cp_reader::*;
 use crate::metadata::*;
+use crate::property::*;
 use crate::*;
 
 #[derive(Debug, Clone)]
