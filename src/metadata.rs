@@ -1,5 +1,5 @@
 use crate::result::Result;
-use byteorder::{LittleEndian, ReadBytesExt};
+use byteorder::ReadBytesExt;
 use std::collections::BTreeMap;
 use std::fs::File;
 use std::io::prelude::*;
@@ -73,7 +73,6 @@ pub(crate) fn read_indexed_meta_data(
         let meta_data_size = buffer.read_u8()?;
 
         let meta_data = if buffer.position() + meta_data_size as u64 == data.size {
-            //TODO(max): This seems like some kind of error ignoring?
             buffer.seek(SeekFrom::Current(meta_data_size as i64))?;
             MetaData {
                 tokens: BTreeMap::new(),
@@ -84,7 +83,6 @@ pub(crate) fn read_indexed_meta_data(
             let text = String::from_utf8(string_buffer)?;
             MetaData::deserialize(&text)
         };
-        println!("data");
         output.push(meta_data);
     }
 

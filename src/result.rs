@@ -4,6 +4,7 @@ pub enum InternalError {
     GroupReadAsData,
     DataReadAsGroup,
     OutOfBounds,
+    Unreachable,
 }
 impl std::fmt::Display for InternalError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -11,6 +12,7 @@ impl std::fmt::Display for InternalError {
             InternalError::GroupReadAsData => write!(f, "Group read as data."),
             InternalError::DataReadAsGroup => write!(f, "Data read as group."),
             InternalError::OutOfBounds => write!(f, "Out of bounds access."),
+            InternalError::Unreachable => write!(f, "Unreachable code was reached."),
         }
     }
 }
