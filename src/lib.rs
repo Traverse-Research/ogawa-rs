@@ -37,7 +37,7 @@ impl StringReader for std::io::Cursor<Vec<u8>> {
 
 const INVALID_GROUP: u64 = 0x7fffffffffffffff;
 const EMPTY_GROUP: u64 = 0x0000000000000000;
-const INVALID_DATA: u64 = 0xffffffffffffffff;
+// const INVALID_DATA: u64 = 0xffffffffffffffff;
 const EMPTY_DATA: u64 = 0x8000000000000000;
 
 pub fn is_group(value: u64) -> bool {

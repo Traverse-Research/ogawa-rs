@@ -117,9 +117,8 @@ impl DataChunk {
 
         let size = if position != 0 {
             reader.seek(SeekFrom::Start(position))?;
-            let size = reader.read_u64::<LittleEndian>()?;
-            // TODO(max): return error if read size is larger than file size
-            size
+            // TODO(max): return error if the read size is larger than file size
+            reader.read_u64::<LittleEndian>()?
         } else {
             0
         };
