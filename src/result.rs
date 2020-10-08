@@ -19,16 +19,13 @@ impl std::fmt::Display for InternalError {
 
 #[derive(Error, Debug)]
 pub enum ParsingError {
+    #[error("Invalid Alembic File")]
     InvalidAlembicFile,
+    #[error("Unsupported Alembic File")]
     UnsupportedAlembicFile,
-}
-impl std::fmt::Display for ParsingError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            ParsingError::InvalidAlembicFile => write!(f, "Invalid Alembic File"),
-            ParsingError::UnsupportedAlembicFile => write!(f, "Unsupported Alembic File"),
-        }
-    }
+
+    #[error(transparent)]
+    FromUtf8Error(#[from] std::string::FromUtf8Error),
 }
 
 #[derive(Error, Debug)]
@@ -58,9 +55,6 @@ pub enum OgawaError {
 
     #[error("I/O error {0}")]
     IoError(#[from] std::io::Error),
-
-    #[error(transparent)]
-    FromUtf8Error(#[from] std::string::FromUtf8Error),
 
     #[error(transparent)]
     Other(#[from] anyhow::Error),

@@ -148,7 +148,10 @@ impl DataChunk {
                 let mut strings = vec![];
                 for i in 0..char_count {
                     if char_buffer[i] == 0 {
-                        strings.push(String::from_utf8(char_buffer[start_str..i].to_vec())?);
+                        strings.push(
+                            String::from_utf8(char_buffer[start_str..i].to_vec())
+                                .map_err(|err| ParsingError::FromUtf8Error(err))?,
+                        );
                         start_str = i + 1;
                     }
                 }
