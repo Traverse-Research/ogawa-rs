@@ -18,6 +18,10 @@ pub use result::{InternalError, OgawaError, ParsingError, Result, UserError};
 
 mod metadata;
 use metadata::MetaData;
+
+mod time_sampling;
+pub use time_sampling::{TimeSampling, TimeSamplingType};
+
 trait StringReader {
     fn read_string(&mut self, size: usize) -> Result<String>;
 }
@@ -33,15 +37,6 @@ const INVALID_GROUP: u64 = 0x7fffffffffffffff;
 const EMPTY_GROUP: u64 = 0x0000000000000000;
 const INVALID_DATA: u64 = 0xffffffffffffffff;
 const EMPTY_DATA: u64 = 0x8000000000000000;
-
-#[derive(Debug)]
-struct ArchiveReader {
-    filename: String,
-    stream_count: usize,
-
-    archive_version: i32,
-    header: ObjectHeader,
-}
 
 pub fn is_group(value: u64) -> bool {
     (value & EMPTY_DATA) == 0
@@ -144,66 +139,6 @@ pub struct DataType {
     extent: u8,
 }
 
-const ACYCLIC_NUM_SAMPLES: u32 = u32::MAX;
-const ACYCLIC_TIME_PER_CYCLE: f64 = f64::MAX / 32.0;
-#[derive(Debug)]
-pub struct TimeSamplingType {
-    num_samples_per_cycle: u32,
-    time_per_cycle: f64,
-}
-#[derive(Debug)]
-pub struct TimeSampling {
-    sampling_type: TimeSamplingType,
-    samples: Vec<f64>,
-}
-
-fn read_time_samplings_and_max(
-    data: &DataChunk,
-    reader: &mut BufReader<File>,
-) -> Result<(Vec<Rc<TimeSampling>>, Vec<i64>)> {
-    let mut buffer = vec![0u8; data.size as usize];
-    data.read(0, reader, &mut buffer)?;
-    let mut buffer = std::io::Cursor::new(buffer);
-
-    let mut out_max_samples = vec![];
-    let mut out_time_samples = vec![];
-
-    loop {
-        if buffer.position() == data.size {
-            break;
-        }
-
-        let max_sample = buffer.read_u32::<LittleEndian>()?;
-        out_max_samples.push(max_sample as i64);
-        let time_per_cycle = buffer.read_f64::<LittleEndian>()?;
-        let num_samples_per_cycle = buffer.read_u32::<LittleEndian>()?;
-
-        let mut samples = vec![0.0f64; num_samples_per_cycle as usize];
-        buffer
-            .read_f64_into::<LittleEndian>(&mut samples)
-            .map_err(|_| ParsingError::InvalidAlembicFile)?;
-
-        let sampling_type = if time_per_cycle == f64::MAX / 32.0 {
-            TimeSamplingType {
-                num_samples_per_cycle: ACYCLIC_NUM_SAMPLES,
-                time_per_cycle: ACYCLIC_TIME_PER_CYCLE,
-            }
-        } else {
-            TimeSamplingType {
-                num_samples_per_cycle,
-                time_per_cycle,
-            }
-        };
-
-        out_time_samples.push(Rc::new(TimeSampling {
-            sampling_type,
-            samples,
-        }));
-    }
-
-    Ok((out_time_samples, out_max_samples))
-}
-
 pub struct FileReader {
     pub file: BufReader<File>,
     pub file_size: u64,
@@ -265,22 +200,10 @@ impl Archive {
             let data = root_group.load_data(&mut reader.file, 0)?;
             data.read_u32(0, &mut reader.file)?
         };
-        dbg!(version);
 
         let ogawa_file_version = {
             let data = root_group.load_data(&mut reader.file, 1)?;
             data.read_u32(0, &mut reader.file)?
-        };
-        dbg!(ogawa_file_version);
-
-        let (time_samplings, max_samples) = {
-            let data = root_group.load_data(&mut reader.file, 4)?;
-            read_time_samplings_and_max(&data, &mut reader.file)?
-        };
-
-        let indexed_meta_data = {
-            let data = root_group.load_data(&mut reader.file, 5)?;
-            metadata::read_indexed_meta_data(&data, &mut reader.file)?
         };
 
         let meta_data = {
@@ -290,6 +213,16 @@ impl Archive {
             let text = String::from_utf8(buffer)?;
 
             MetaData::deserialize(&text)
+        };
+
+        let (time_samplings, max_samples) = {
+            let data = root_group.load_data(&mut reader.file, 4)?;
+            time_sampling::read_time_samplings_and_max(&data, &mut reader.file)?
+        };
+
+        let indexed_meta_data = {
+            let data = root_group.load_data(&mut reader.file, 5)?;
+            metadata::read_indexed_meta_data(&data, &mut reader.file)?
         };
 
         let root_header = ObjectHeader {
@@ -310,5 +243,17 @@ impl Archive {
             max_samples,
             indexed_meta_data,
         })
+    }
+
+    pub fn load_root_object(&self, reader: &mut FileReader) -> Result<ObjectReader> {
+        let group = Rc::new(self.root_group.load_group(&mut reader.file, 2, false)?);
+        ObjectReader::new(
+            group,
+            "",
+            &mut reader.file,
+            &self.indexed_meta_data,
+            &self.time_samplings,
+            Rc::new(self.root_header.clone()),
+        )
     }
 }

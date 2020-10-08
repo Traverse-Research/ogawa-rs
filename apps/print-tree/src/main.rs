@@ -59,18 +59,11 @@ fn print_chunk_tree(root_group: &GroupChunk, reader: &mut BufReader<File>) -> Re
     Ok(())
 }
 
-fn print_object_structure(file: &mut BufReader<File>, archive: &Archive) -> Result<()> {
-    let group = Rc::new(archive.root_group.load_group(file, 2, false)?);
-    let object_reader = ObjectReader::new(
-        group,
-        "",
-        file,
-        &archive.indexed_meta_data,
-        &archive.time_samplings,
-        Rc::new(archive.root_header.clone()),
-    )?;
+fn print_object_structure(reader: &mut FileReader, archive: &Archive) -> Result<()> {
+    let object_reader = archive.load_root_object(reader)?;
+    let file = &mut reader.file;
 
-    let mut stack = vec![(0, Rc::new(object_reader))];
+    let mut stack = vec![(0, object_reader)];
 
     loop {
         if stack.is_empty() {
@@ -175,7 +168,7 @@ fn main() -> ogawa_rs::Result<()> {
     print_chunk_tree(&archive.root_group, &mut file_reader.file)?;
 
     println!("------ print_object_structure ------");
-    print_object_structure(&mut file_reader.file, &archive)?;
+    print_object_structure(&mut file_reader, &archive)?;
 
     Ok(())
 }

@@ -84,18 +84,18 @@ impl ObjectReader {
         reader: &mut BufReader<File>,
         indexed_meta_data: &[MetaData],
         time_samplings: &[Rc<TimeSampling>],
-    ) -> Result<Rc<ObjectReader>> {
+    ) -> Result<ObjectReader> {
         let parent_group = &self.group;
         let child_group = Rc::new(parent_group.load_group(reader, index + 1, false)?);
 
-        Ok(Rc::new(ObjectReader::new(
+        Ok(ObjectReader::new(
             child_group,
             &self.children[index].full_name,
             reader,
             indexed_meta_data,
             time_samplings,
             Rc::new(self.children[index].clone()),
-        )?))
+        )?)
     }
 
     pub fn properties(&self) -> Option<Rc<CompoundPropertyReader>> {
