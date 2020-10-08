@@ -80,8 +80,7 @@ pub(crate) fn read_indexed_meta_data(
         } else {
             let mut string_buffer = vec![0u8; meta_data_size as usize];
             buffer.read_exact(&mut string_buffer)?;
-            let text =
-                String::from_utf8(string_buffer).map_err(|err| ParsingError::FromUtf8Error(err))?;
+            let text = String::from_utf8(string_buffer).map_err(ParsingError::FromUtf8Error)?;
             MetaData::deserialize(&text)
         };
         output.push(meta_data);

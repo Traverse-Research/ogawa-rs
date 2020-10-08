@@ -27,8 +27,8 @@ trait StringReader {
 impl StringReader for std::io::Cursor<Vec<u8>> {
     fn read_string(&mut self, size: usize) -> Result<String> {
         let mut buffer = vec![0u8; size];
-        self.read(&mut buffer)?;
-        Ok(String::from_utf8(buffer).map_err(|err| ParsingError::FromUtf8Error(err))?)
+        self.read_exact(&mut buffer)?;
+        Ok(String::from_utf8(buffer).map_err(ParsingError::FromUtf8Error)?)
     }
 }
 
@@ -209,7 +209,7 @@ impl Archive {
             let data = root_group.load_data(&mut reader.file, 3)?;
             let mut buffer = vec![0u8; data.size as usize];
             data.read(0, &mut reader.file, &mut buffer)?;
-            let text = String::from_utf8(buffer).map_err(|err| ParsingError::FromUtf8Error(err))?;
+            let text = String::from_utf8(buffer).map_err(ParsingError::FromUtf8Error)?;
 
             MetaData::deserialize(&text)
         };
