@@ -144,6 +144,121 @@ impl DataChunk {
         Ok(DataChunk { position, size })
     }
 
+    pub(crate) fn read_pod_array(
+        &self,
+        data_type: &DataType,
+        reader: &mut BufReader<File>,
+    ) -> Result<PodArray> {
+        if self.size < 16 && self.size != 0 {
+            return Err(ParsingError::InvalidAlembicFile.into());
+        }
+
+        const DATA_OFFSET: u64 = 16;
+
+        match data_type.pod_type {
+            PodType::String => {
+                let char_count = (self.size - 16) as usize;
+                let mut char_buffer = vec![0u8; char_count];
+                self.read(16, reader, &mut char_buffer)?;
+
+                let mut start_str = 0;
+                let mut strings = vec![];
+                for i in 0..char_count {
+                    if char_buffer[i] == 0 {
+                        strings.push(String::from_utf8(char_buffer[start_str..i].to_vec())?);
+                        start_str = i + 1;
+                    }
+                }
+                Ok(PodArray::String(strings))
+            }
+            PodType::WString => todo!(),
+            PodType::Boolean => todo!(),
+            PodType::U8 => {
+                let element_count = (self.size - DATA_OFFSET) as usize / std::mem::size_of::<u8>();
+                let mut buffer = vec![0; element_count];
+                reader.seek(SeekFrom::Start(self.position + DATA_OFFSET + 8))?;
+                reader.read(&mut buffer)?;
+                Ok(PodArray::U8(buffer))
+            }
+            PodType::I8 => {
+                let element_count = (self.size - DATA_OFFSET) as usize / std::mem::size_of::<i8>();
+                let mut buffer = vec![0; element_count];
+                reader.seek(SeekFrom::Start(self.position + DATA_OFFSET + 8))?;
+                reader.read_i8_into(&mut buffer)?;
+                Ok(PodArray::I8(buffer))
+            }
+            PodType::U16 => {
+                let element_count = (self.size - DATA_OFFSET) as usize / std::mem::size_of::<u16>();
+                let mut buffer = vec![0; element_count];
+                reader.seek(SeekFrom::Start(self.position + DATA_OFFSET + 8))?;
+                reader.read_u16_into::<LittleEndian>(&mut buffer)?;
+                Ok(PodArray::U16(buffer))
+            }
+            PodType::I16 => {
+                let element_count = (self.size - DATA_OFFSET) as usize / std::mem::size_of::<i16>();
+                let mut buffer = vec![0; element_count];
+                reader.seek(SeekFrom::Start(self.position + DATA_OFFSET + 8))?;
+                reader.read_i16_into::<LittleEndian>(&mut buffer)?;
+                Ok(PodArray::I16(buffer))
+            }
+            PodType::U32 => {
+                let element_count = (self.size - DATA_OFFSET) as usize / std::mem::size_of::<u32>();
+                let mut buffer = vec![0; element_count];
+                reader.seek(SeekFrom::Start(self.position + DATA_OFFSET + 8))?;
+                reader.read_u32_into::<LittleEndian>(&mut buffer)?;
+                Ok(PodArray::U32(buffer))
+            }
+            PodType::I32 => {
+                let element_count = (self.size - DATA_OFFSET) as usize / std::mem::size_of::<i32>();
+                let mut buffer = vec![0; element_count];
+                reader.seek(SeekFrom::Start(self.position + DATA_OFFSET + 8))?;
+                reader.read_i32_into::<LittleEndian>(&mut buffer)?;
+                Ok(PodArray::I32(buffer))
+            }
+            PodType::U64 => {
+                let element_count = (self.size - DATA_OFFSET) as usize / std::mem::size_of::<u64>();
+                let mut buffer = vec![0; element_count];
+                reader.seek(SeekFrom::Start(self.position + DATA_OFFSET + 8))?;
+                reader.read_u64_into::<LittleEndian>(&mut buffer)?;
+                Ok(PodArray::U64(buffer))
+            }
+            PodType::I64 => {
+                let element_count = (self.size - DATA_OFFSET) as usize / std::mem::size_of::<i64>();
+                let mut buffer = vec![0; element_count];
+                reader.seek(SeekFrom::Start(self.position + DATA_OFFSET + 8))?;
+                reader.read_i64_into::<LittleEndian>(&mut buffer)?;
+                Ok(PodArray::I64(buffer))
+            }
+            PodType::F16 => {
+                let element_count = (self.size - DATA_OFFSET) as usize / std::mem::size_of::<f32>();
+                let mut buffer = vec![0; element_count];
+                reader.seek(SeekFrom::Start(self.position + DATA_OFFSET + 8))?;
+                reader.read_u16_into::<LittleEndian>(&mut buffer)?;
+                let buffer = buffer
+                    .into_iter()
+                    .map(|i| half::f16::from_bits(i))
+                    .collect::<Vec<_>>();
+                Ok(PodArray::F16(buffer))
+            }
+            PodType::F32 => {
+                let element_count = (self.size - DATA_OFFSET) as usize / std::mem::size_of::<f32>();
+                let mut buffer = vec![0.0; element_count];
+                reader.seek(SeekFrom::Start(self.position + DATA_OFFSET + 8))?;
+                reader.read_f32_into::<LittleEndian>(&mut buffer)?;
+                Ok(PodArray::F32(buffer))
+            }
+            PodType::F64 => {
+                let element_count = (self.size - DATA_OFFSET) as usize / std::mem::size_of::<f64>();
+                let mut buffer = vec![0.0; element_count];
+                reader.seek(SeekFrom::Start(self.position + DATA_OFFSET + 8))?;
+                reader.read_f64_into::<LittleEndian>(&mut buffer)?;
+                Ok(PodArray::F64(buffer))
+            }
+
+            PodType::Unknown => Err(UserError::InvalidParameter.into()),
+        }
+    }
+
     pub(crate) fn read(
         &self,
         offset: u64,

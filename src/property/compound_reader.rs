@@ -165,9 +165,6 @@ fn read_property_headers(
 
         if property_type != PropertyType::Compound {
             let pod_type = (info >> 4) & 0xf;
-            if pod_type >= PodType::NumPodTypes as u32 {
-                return Err(ParsingError::InvalidAlembicFile.into());
-            }
             let pod_type: PodType = pod_type.try_into()?;
             let extent = ((info >> 12) & 0xff) as u8;
             data_type = DataType { pod_type, extent };

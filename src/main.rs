@@ -59,7 +59,7 @@ fn address_from_child(child: u64) -> u64 {
 }
 
 #[repr(u32)]
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 enum PodType {
     Boolean = 0,
     U8,
@@ -81,9 +81,30 @@ enum PodType {
     String,
     WString,
 
-    NumPodTypes,
-
     Unknown = 127,
+}
+
+#[derive(Debug)]
+enum PodArray {
+    Boolean(Vec<bool>),
+    U8(Vec<u8>),
+    I8(Vec<i8>),
+
+    U16(Vec<u16>),
+    I16(Vec<i16>),
+
+    U32(Vec<u32>),
+    I32(Vec<i32>),
+
+    U64(Vec<u64>),
+    I64(Vec<i64>),
+
+    F16(Vec<half::f16>),
+    F32(Vec<f32>),
+    F64(Vec<f64>),
+
+    String(Vec<String>),
+    WString(Vec<String>),
 }
 
 use std::convert::{TryFrom, TryInto};
@@ -326,53 +347,91 @@ fn main() -> Result<(), OgawaError> {
         Rc::new(header.clone()),
     )?;
 
-    let mut stack = vec![Rc::new(object_reader)];
+    let mut stack = vec![(0, Rc::new(object_reader))];
 
     loop {
         if stack.is_empty() {
             break;
         }
 
-        let current = stack.pop().unwrap();
+        let (indent, current) = stack.pop().unwrap();
         let header = current.header.clone();
+        for _ in 0..indent {
+            print!("|   ");
+        }
         println!("name: {}", &header.full_name);
-        let metadata = header.meta_data.clone();
-        println!("metadata: {}", metadata.serialize());
 
         let child_count = current.child_map.len();
         for i in 0..child_count {
             let child = current.load_child(i, &mut file, &indexed_meta_data, &time_samplings)?;
-            stack.push(child);
+            stack.push((indent + 1, child));
         }
 
         let properties = current.properties().unwrap();
-
-        let mut prop_stack = vec![properties];
+        let mut prop_stack = vec![];
+        for i in (0..properties.sub_property_count()).rev() {
+            let prop =
+                properties.load_sub_property(i, &mut file, &indexed_meta_data, &time_samplings)?;
+            prop_stack.push((1, Rc::new(prop)));
+        }
 
         loop {
             if prop_stack.is_empty() {
                 break;
             }
 
-            let properties = prop_stack.pop().unwrap();
-            for i in 0..properties.sub_property_count() {
-                let prop = properties.load_sub_property(
-                    i,
-                    &mut file,
-                    &indexed_meta_data,
-                    &time_samplings,
-                )?;
+            let (prop_indent, properties) = prop_stack.pop().unwrap();
 
-                let prop_name = prop.name().to_owned();
-                let typename = match prop {
-                    PropertyReader::Array(_) => "array",
-                    PropertyReader::Compound(compound_reader) => {
-                        prop_stack.push(Rc::new(compound_reader));
-                        "compound"
+            if let PropertyReader::Compound(properties) = properties.as_ref() {
+                for i in (0..properties.sub_property_count()).rev() {
+                    let prop = properties.load_sub_property(
+                        i,
+                        &mut file,
+                        &indexed_meta_data,
+                        &time_samplings,
+                    )?;
+
+                    prop_stack.push(((prop_indent + 1), Rc::new(prop)));
+                }
+            }
+
+            let prop_name = properties.name().to_owned();
+            let typename = match properties.as_ref() {
+                PropertyReader::Array(_) => "array",
+                PropertyReader::Compound(_) => "compound",
+                PropertyReader::Scalar(_) => "scalar",
+            };
+            for _ in 0..(indent + prop_indent) {
+                print!("|   ");
+            }
+            println!("prop({}): {}", typename, prop_name);
+
+            match properties.as_ref() {
+                PropertyReader::Scalar(pr) => {
+                    for i in 0..pr.sample_count() {
+                        for _ in 0..(indent + prop_indent + 1) {
+                            print!("|   ");
+                        }
+                        let size = pr.sample_size(i, &mut file)?;
+                        print!("scalar data {:?} ({} bytes)", &pr.header.data_type, size);
+                        let sample = pr.load_sample(i, &mut file)?;
+                        print!("{:?}", &sample);
+                        println!();
                     }
-                    PropertyReader::Scalar(_) => "scalar",
-                };
-                println!("prop({}): {}", typename, prop_name);
+                }
+                PropertyReader::Array(pr) => {
+                    for i in 0..pr.sample_count() {
+                        for _ in 0..(indent + prop_indent + 1) {
+                            print!("|   ");
+                        }
+                        let size = pr.sample_size(i, &mut file)?;
+                        print!("array data {:?} ({} bytes)", &pr.header.data_type, size);
+                        let sample = pr.load_sample(i, &mut file)?;
+                        //print!("{:?}", &sample.len());
+                        println!();
+                    }
+                }
+                PropertyReader::Compound(_) => {}
             }
         }
     }

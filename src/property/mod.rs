@@ -50,3 +50,17 @@ pub(crate) struct PropertyHeader {
     pub(crate) last_changed_index: u32,
     pub(crate) time_sampling_index: u32,
 }
+
+impl PropertyHeader {
+    fn map_index(&self, index: u32) -> usize {
+        if index < self.first_changed_index
+            || (self.first_changed_index == 0 && self.last_changed_index == 0)
+        {
+            0
+        } else if index >= self.last_changed_index {
+            (self.last_changed_index - self.first_changed_index + 1) as usize
+        } else {
+            (index - self.first_changed_index + 1) as usize
+        }
+    }
+}
