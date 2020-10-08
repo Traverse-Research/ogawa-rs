@@ -42,7 +42,7 @@ pub struct PropertyHeader {
     pub data_type: DataType,
     pub time_sampling: Option<Rc<TimeSampling>>,
 
-    //friends?
+    // friends?
     pub is_scalar_like: bool,
     pub is_homogenous: bool,
     pub next_sample_index: u32,

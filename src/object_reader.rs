@@ -151,7 +151,7 @@ fn read_object_headers(
         });
     }
 
-    //TODO(max): Verify hashes?
+    // TODO(max): Verify hashes?
 
     Ok(headers)
 }

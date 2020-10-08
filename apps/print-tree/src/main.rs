@@ -148,7 +148,7 @@ fn print_object_structure(reader: &mut FileReader, archive: &Archive) -> Result<
                         let size = pr.sample_size(i, file)?;
                         print!("array data {:?} ({} bytes)", &pr.header.data_type, size);
                         let _sample = pr.load_sample(i, file)?;
-                        //print!("{:?}", &sample.len());
+                        // print!("{:?}", &sample.len());
                         println!();
                     }
                 }

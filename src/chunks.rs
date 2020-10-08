@@ -9,7 +9,7 @@ use crate::*;
 #[derive(Debug, Clone)]
 pub struct GroupChunk {
     pub position: u64,
-    pub child_count: u64, //needs to be a separate variable from the length of the children vec
+    pub child_count: u64, // needs to be a separate variable from the length of the children vec
     pub children: Vec<u64>,
 }
 
@@ -30,7 +30,7 @@ impl GroupChunk {
         reader.seek(SeekFrom::Start(group_pos))?;
 
         let child_count = reader.read_u64::<LittleEndian>()?;
-        if child_count > 123456 /*TODO(max): replace with file size / 8?*/|| child_count == 0 {
+        if child_count > 123456 /* TODO(max): replace with file size / 8? */|| child_count == 0 {
             return Ok(GroupChunk {
                 position: group_pos,
                 child_count: 0,
@@ -118,7 +118,7 @@ impl DataChunk {
         let size = if position != 0 {
             reader.seek(SeekFrom::Start(position))?;
             let size = reader.read_u64::<LittleEndian>()?;
-            //TODO(max): return error if read size is larger than file size
+            // TODO(max): return error if read size is larger than file size
             size
         } else {
             0
@@ -244,7 +244,7 @@ impl DataChunk {
 
     pub fn read(&self, offset: u64, reader: &mut BufReader<File>, buffer: &mut [u8]) -> Result<()> {
         if self.size == 0
-        /* || offset + size > file_size*/
+        /* || offset + size > file_size */
         {
             return Err(ParsingError::InvalidAlembicFile.into());
         }

@@ -8,7 +8,6 @@ use std::rc::Rc;
 mod object_reader;
 pub use object_reader::{ObjectHeader, ObjectReader};
 mod property;
-//use property::*;
 pub use property::*;
 mod chunks;
 pub use chunks::*;

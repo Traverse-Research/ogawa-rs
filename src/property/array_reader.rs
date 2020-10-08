@@ -34,7 +34,6 @@ impl ArrayPropertyReader {
 
         let index = self.header.map_index(index);
         let data = self.group.load_data(reader, index)?;
-        //data.read_pod(&self.header.data_type, self.header.data_type.pod_type)
         Ok(data.size as usize)
     }
 }
