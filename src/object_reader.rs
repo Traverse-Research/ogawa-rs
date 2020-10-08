@@ -10,22 +10,22 @@ use crate::property::*;
 use crate::*;
 
 #[derive(Debug, Clone)]
-pub(crate) struct ObjectHeader {
-    pub(crate) name: String,
-    pub(crate) full_name: String,
-    pub(crate) meta_data: MetaData,
+pub struct ObjectHeader {
+    pub name: String,
+    pub full_name: String,
+    pub meta_data: MetaData,
 }
 
 #[derive(Debug)]
-pub(crate) struct ObjectReader {
-    pub(crate) header: Rc<ObjectHeader>,
-    pub(crate) group: Rc<GroupChunk>,
-    pub(crate) cp_reader: Option<Rc<CompoundPropertyReader>>,
-    pub(crate) children: Vec<ObjectHeader>,
-    pub(crate) child_map: HashMap<String, usize>,
+pub struct ObjectReader {
+    pub header: Rc<ObjectHeader>,
+    pub group: Rc<GroupChunk>,
+    pub cp_reader: Option<Rc<CompoundPropertyReader>>,
+    pub children: Vec<ObjectHeader>,
+    pub child_map: HashMap<String, usize>,
 }
 impl ObjectReader {
-    pub(crate) fn new(
+    pub fn new(
         group: Rc<GroupChunk>,
         parent_name: &str,
         reader: &mut BufReader<File>,
@@ -78,7 +78,7 @@ impl ObjectReader {
         })
     }
 
-    pub(crate) fn load_child(
+    pub fn load_child(
         &self,
         index: usize,
         reader: &mut BufReader<File>,
@@ -98,7 +98,7 @@ impl ObjectReader {
         )?))
     }
 
-    pub(crate) fn properties(&self) -> Option<Rc<CompoundPropertyReader>> {
+    pub fn properties(&self) -> Option<Rc<CompoundPropertyReader>> {
         self.cp_reader.as_ref().map(|x| Rc::clone(x))
     }
 }

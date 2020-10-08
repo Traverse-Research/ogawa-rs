@@ -13,19 +13,19 @@ use crate::DataType;
 use crate::TimeSampling;
 
 #[derive(Debug, PartialEq, Clone, Copy)]
-pub(crate) enum PropertyType {
+pub enum PropertyType {
     Array,
     Compound,
     Scalar,
 }
 
-pub(crate) enum PropertyReader {
+pub enum PropertyReader {
     Array(ArrayPropertyReader),
     Compound(CompoundPropertyReader),
     Scalar(ScalarPropertyReader),
 }
 impl PropertyReader {
-    pub(crate) fn name(&self) -> &str {
+    pub fn name(&self) -> &str {
         match self {
             Self::Array(r) => r.name(),
             Self::Compound(r) => r.name(),
@@ -35,20 +35,20 @@ impl PropertyReader {
 }
 
 #[derive(Debug, Clone)]
-pub(crate) struct PropertyHeader {
-    pub(crate) name: String,
-    pub(crate) property_type: PropertyType,
-    pub(crate) meta_data: MetaData,
-    pub(crate) data_type: DataType,
-    pub(crate) time_sampling: Option<Rc<TimeSampling>>,
+pub struct PropertyHeader {
+    pub name: String,
+    pub property_type: PropertyType,
+    pub meta_data: MetaData,
+    pub data_type: DataType,
+    pub time_sampling: Option<Rc<TimeSampling>>,
 
     //friends?
-    pub(crate) is_scalar_like: bool,
-    pub(crate) is_homogenous: bool,
-    pub(crate) next_sample_index: u32,
-    pub(crate) first_changed_index: u32,
-    pub(crate) last_changed_index: u32,
-    pub(crate) time_sampling_index: u32,
+    pub is_scalar_like: bool,
+    pub is_homogenous: bool,
+    pub next_sample_index: u32,
+    pub first_changed_index: u32,
+    pub last_changed_index: u32,
+    pub time_sampling_index: u32,
 }
 
 impl PropertyHeader {

@@ -9,7 +9,7 @@ use super::{PropertyReader, PropertyType};
 use crate::*;
 
 #[derive(Debug)]
-pub(crate) struct CompoundPropertyReader {
+pub struct CompoundPropertyReader {
     pub(crate) group: Rc<GroupChunk>,
     pub(crate) property_headers: Vec<PropertyHeader>,
     pub(crate) sub_properties: HashMap<String, usize>,
@@ -17,7 +17,7 @@ pub(crate) struct CompoundPropertyReader {
 }
 
 impl CompoundPropertyReader {
-    pub(crate) fn new(
+    pub fn new(
         group: Rc<GroupChunk>,
         meta_data: MetaData,
         reader: &mut BufReader<File>,

@@ -7,14 +7,14 @@ use std::io::SeekFrom;
 use crate::*;
 
 #[derive(Debug, Clone)]
-pub(crate) struct GroupChunk {
-    pub(crate) position: u64,
-    pub(crate) child_count: u64, //needs to be a separate variable from the length of the children vec
-    pub(crate) children: Vec<u64>,
+pub struct GroupChunk {
+    pub position: u64,
+    pub child_count: u64, //needs to be a separate variable from the length of the children vec
+    pub children: Vec<u64>,
 }
 
 impl GroupChunk {
-    pub(crate) fn load(
+    pub fn load(
         group_pos: u64,
         is_light: bool,
         reader: &mut BufReader<File>,
@@ -54,11 +54,11 @@ impl GroupChunk {
             children,
         })
     }
-    pub(crate) fn is_light(&self) -> bool {
+    pub fn is_light(&self) -> bool {
         self.child_count != 0 && self.children.is_empty()
     }
 
-    pub(crate) fn load_group(
+    pub fn load_group(
         &self,
         reader: &mut BufReader<File>,
         index: usize,
@@ -84,11 +84,7 @@ impl GroupChunk {
         }
     }
 
-    pub(crate) fn load_data(
-        &self,
-        reader: &mut BufReader<File>,
-        index: usize,
-    ) -> Result<DataChunk> {
+    pub fn load_data(&self, reader: &mut BufReader<File>, index: usize) -> Result<DataChunk> {
         if self.is_light() {
             if index < (self.child_count as usize) {
                 reader.seek(SeekFrom::Start(self.position + 8 * (index as u64) + 8))?;
@@ -110,13 +106,13 @@ impl GroupChunk {
 }
 
 #[derive(Debug)]
-pub(crate) struct DataChunk {
-    pub(crate) position: u64,
-    pub(crate) size: u64,
+pub struct DataChunk {
+    pub position: u64,
+    pub size: u64,
 }
 
 impl DataChunk {
-    pub(crate) fn load(position: u64, reader: &mut BufReader<File>) -> Result<DataChunk> {
+    pub fn load(position: u64, reader: &mut BufReader<File>) -> Result<DataChunk> {
         let position = address_from_child(position);
 
         let size = if position != 0 {
@@ -131,7 +127,7 @@ impl DataChunk {
         Ok(DataChunk { position, size })
     }
 
-    pub(crate) fn read_pod_array(
+    pub fn read_pod_array(
         &self,
         data_type: &DataType,
         reader: &mut BufReader<File>,
@@ -246,12 +242,7 @@ impl DataChunk {
         }
     }
 
-    pub(crate) fn read(
-        &self,
-        offset: u64,
-        reader: &mut BufReader<File>,
-        buffer: &mut [u8],
-    ) -> Result<()> {
+    pub fn read(&self, offset: u64, reader: &mut BufReader<File>, buffer: &mut [u8]) -> Result<()> {
         if self.size == 0
         /* || offset + size > file_size*/
         {
@@ -263,7 +254,7 @@ impl DataChunk {
 
         Ok(())
     }
-    pub(crate) fn read_u32(&self, offset: u64, reader: &mut BufReader<File>) -> Result<u32> {
+    pub fn read_u32(&self, offset: u64, reader: &mut BufReader<File>) -> Result<u32> {
         if self.size != 4 {
             return Err(ParsingError::InvalidAlembicFile.into());
         }
@@ -274,7 +265,7 @@ impl DataChunk {
     }
 }
 
-pub(crate) enum Chunk {
+pub enum Chunk {
     Group(GroupChunk),
     Data(DataChunk),
 }
