@@ -210,7 +210,7 @@ fn print_debug_info(root_group: &GroupChunk, reader: &mut BufReader<File>) -> Re
     let mut stack = vec![(0, 0, Chunk::Group(root_group.clone()))];
 
     loop {
-        if stack.len() == 0 {
+        if stack.is_empty() {
             break;
         }
 
@@ -273,8 +273,8 @@ fn main() -> Result<(), OgawaError> {
     dbg!(file_size);
 
     let mut magic = vec![0; 5];
-    file.read(&mut magic)?;
-    if &magic != &[0x4f, 0x67, 0x61, 0x77, 0x61] {
+    file.read_exact(&mut magic)?;
+    if magic != [0x4f, 0x67, 0x61, 0x77, 0x61] {
         return Err(anyhow::anyhow!("Magic value of ogawa file does not match.").into());
     }
 
@@ -310,7 +310,7 @@ fn main() -> Result<(), OgawaError> {
     };
     dbg!(ogawa_file_version);
 
-    let (time_samplings, max_samples) = {
+    let (time_samplings, _max_samples) = {
         let data = root_group.load_data(&mut file, 4)?;
         read_time_samplings_and_max(&data, &mut file)?
     };
@@ -344,7 +344,7 @@ fn main() -> Result<(), OgawaError> {
         &mut file,
         &indexed_meta_data,
         &time_samplings,
-        Rc::new(header.clone()),
+        Rc::new(header),
     )?;
 
     let mut stack = vec![(0, Rc::new(object_reader))];
@@ -426,7 +426,7 @@ fn main() -> Result<(), OgawaError> {
                         }
                         let size = pr.sample_size(i, &mut file)?;
                         print!("array data {:?} ({} bytes)", &pr.header.data_type, size);
-                        let sample = pr.load_sample(i, &mut file)?;
+                        let _sample = pr.load_sample(i, &mut file)?;
                         //print!("{:?}", &sample.len());
                         println!();
                     }

@@ -29,8 +29,8 @@ impl ObjectReader {
         group: Rc<GroupChunk>,
         parent_name: &str,
         reader: &mut BufReader<File>,
-        indexed_meta_data: &Vec<MetaData>,
-        time_samplings: &Vec<Rc<TimeSampling>>,
+        indexed_meta_data: &[MetaData],
+        time_samplings: &[Rc<TimeSampling>],
         header: Rc<ObjectHeader>,
     ) -> Result<Self> {
         let child_count = group.child_count as usize;
@@ -82,8 +82,8 @@ impl ObjectReader {
         &self,
         index: usize,
         reader: &mut BufReader<File>,
-        indexed_meta_data: &Vec<MetaData>,
-        time_samplings: &Vec<Rc<TimeSampling>>,
+        indexed_meta_data: &[MetaData],
+        time_samplings: &[Rc<TimeSampling>],
     ) -> Result<Rc<ObjectReader>> {
         let parent_group = &self.group;
         let child_group = Rc::new(parent_group.load_group(reader, index + 1, false)?);
@@ -108,7 +108,7 @@ fn read_object_headers(
     index: usize,
     parent_name: &str,
     reader: &mut BufReader<File>,
-    indexed_meta_data: &Vec<MetaData>,
+    indexed_meta_data: &[MetaData],
 ) -> Result<Vec<ObjectHeader>> {
     let data = group.load_data(reader, index)?;
 

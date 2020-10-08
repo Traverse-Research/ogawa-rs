@@ -3,7 +3,6 @@ use std::fs::File;
 use std::io::prelude::*;
 use std::io::BufReader;
 use std::io::SeekFrom;
-use std::rc::Rc;
 
 use crate::*;
 
@@ -54,18 +53,6 @@ impl GroupChunk {
             child_count,
             children,
         })
-    }
-    pub(crate) fn is_child_group(&self, index: usize) -> bool {
-        index < self.children.len() && is_group(self.children[index])
-    }
-    pub(crate) fn is_child_data(&self, index: usize) -> bool {
-        index < self.children.len() && is_data(self.children[index])
-    }
-    pub(crate) fn is_empty_child_group(&self, index: usize) -> bool {
-        index < self.children.len() && is_empty_group(self.children[index])
-    }
-    pub(crate) fn is_empty_child_data(&self, index: usize) -> bool {
-        index < self.children.len() && is_empty_data(self.children[index])
     }
     pub(crate) fn is_light(&self) -> bool {
         self.child_count != 0 && self.children.is_empty()
@@ -177,7 +164,7 @@ impl DataChunk {
                 let element_count = (self.size - DATA_OFFSET) as usize / std::mem::size_of::<u8>();
                 let mut buffer = vec![0; element_count];
                 reader.seek(SeekFrom::Start(self.position + DATA_OFFSET + 8))?;
-                reader.read(&mut buffer)?;
+                reader.read_exact(&mut buffer)?;
                 Ok(PodArray::U8(buffer))
             }
             PodType::I8 => {
@@ -236,7 +223,7 @@ impl DataChunk {
                 reader.read_u16_into::<LittleEndian>(&mut buffer)?;
                 let buffer = buffer
                     .into_iter()
-                    .map(|i| half::f16::from_bits(i))
+                    .map(half::f16::from_bits)
                     .collect::<Vec<_>>();
                 Ok(PodArray::F16(buffer))
             }
@@ -272,7 +259,7 @@ impl DataChunk {
         }
 
         reader.seek(SeekFrom::Start(self.position + offset + 8))?;
-        reader.read(buffer)?;
+        reader.read_exact(buffer)?;
 
         Ok(())
     }

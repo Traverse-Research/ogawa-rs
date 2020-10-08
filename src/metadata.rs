@@ -79,7 +79,7 @@ pub(crate) fn read_indexed_meta_data(
             }
         } else {
             let mut string_buffer = vec![0u8; meta_data_size as usize];
-            buffer.read(&mut string_buffer)?;
+            buffer.read_exact(&mut string_buffer)?;
             let text = String::from_utf8(string_buffer)?;
             MetaData::deserialize(&text)
         };

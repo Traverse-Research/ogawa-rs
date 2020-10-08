@@ -34,14 +34,12 @@ impl std::fmt::Display for ParsingError {
 #[derive(Error, Debug)]
 pub enum UserError {
     OutOfBounds,
-    TypeMismatch,
     InvalidParameter,
 }
 impl std::fmt::Display for UserError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             UserError::OutOfBounds => write!(f, "Out of bounds"),
-            UserError::TypeMismatch => write!(f, "Type mismatch"),
             UserError::InvalidParameter => write!(f, "Invalid parameter"),
         }
     }

@@ -107,6 +107,25 @@ impl CompoundPropertyReader {
             }
         })
     }
+
+    pub fn load_sub_property_by_name(
+        &self,
+        name: &str,
+        reader: &mut BufReader<File>,
+        indexed_meta_data: &[MetaData],
+        time_samplings: &[Rc<TimeSampling>],
+    ) -> Result<Option<PropertyReader>> {
+        if let Some(index) = self.find_sub_property_index(name) {
+            Ok(Some(self.load_sub_property(
+                index,
+                reader,
+                indexed_meta_data,
+                time_samplings,
+            )?))
+        } else {
+            Ok(None)
+        }
+    }
 }
 
 fn read_property_headers(
