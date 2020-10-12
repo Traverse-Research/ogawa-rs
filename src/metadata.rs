@@ -1,10 +1,9 @@
+use crate::reader::ArchiveReader;
 use crate::result::*;
 use byteorder::ReadBytesExt;
 use std::collections::BTreeMap;
-use std::fs::File;
-use std::io::prelude::*;
-use std::io::BufReader;
-use std::io::SeekFrom;
+use std::io::{Read, Seek, SeekFrom};
+
 #[derive(Debug, Clone, Default)]
 pub struct MetaData {
     tokens: BTreeMap<String, String>,
@@ -57,7 +56,7 @@ impl MetaData {
 
 pub(crate) fn read_indexed_meta_data(
     data: &crate::DataChunk,
-    reader: &mut BufReader<File>,
+    reader: &mut dyn ArchiveReader,
 ) -> Result<Vec<MetaData>> {
     let mut output = vec![MetaData::default()];
 

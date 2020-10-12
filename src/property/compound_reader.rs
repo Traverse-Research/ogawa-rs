@@ -2,11 +2,15 @@ use byteorder::{LittleEndian, ReadBytesExt};
 use std::collections::HashMap;
 use std::rc::Rc;
 
-use std::fs::File;
-use std::io::BufReader;
-
-use super::{PropertyReader, PropertyType};
-use crate::*;
+use super::{
+    ArrayPropertyReader, PropertyHeader, PropertyReader, PropertyType, ScalarPropertyReader,
+};
+use crate::chunks::*;
+use crate::metadata::MetaData;
+use crate::pod::*;
+use crate::reader::{ArchiveReader, StringReader};
+use crate::result::*;
+use crate::time_sampling::TimeSampling;
 
 #[derive(Debug)]
 pub struct CompoundPropertyReader {
@@ -20,7 +24,7 @@ impl CompoundPropertyReader {
     pub fn new(
         group: Rc<GroupChunk>,
         meta_data: MetaData,
-        reader: &mut BufReader<File>,
+        reader: &mut dyn ArchiveReader,
         indexed_meta_data: &[MetaData],
         time_samplings: &[Rc<TimeSampling>],
     ) -> Result<Self> {
@@ -81,7 +85,7 @@ impl CompoundPropertyReader {
     pub fn load_sub_property(
         &self,
         index: usize,
-        reader: &mut BufReader<File>,
+        reader: &mut dyn ArchiveReader,
         indexed_meta_data: &[MetaData],
         time_samplings: &[Rc<TimeSampling>],
     ) -> Result<PropertyReader> {
@@ -112,7 +116,7 @@ impl CompoundPropertyReader {
 fn read_property_headers(
     group: &GroupChunk,
     index: usize,
-    reader: &mut BufReader<File>,
+    reader: &mut dyn ArchiveReader,
     indexed_meta_data: &[MetaData],
     time_samplings: &[Rc<TimeSampling>],
 ) -> Result<Vec<PropertyHeader>> {

@@ -1,10 +1,29 @@
+use crate::pod::*;
+use crate::reader::ArchiveReader;
+use crate::result::*;
 use byteorder::{LittleEndian, ReadBytesExt};
-use std::fs::File;
-use std::io::prelude::*;
-use std::io::BufReader;
 use std::io::SeekFrom;
 
-use crate::*;
+const INVALID_GROUP: u64 = 0x7fffffffffffffff;
+const EMPTY_GROUP: u64 = 0x0000000000000000;
+// const INVALID_DATA: u64 = 0xffffffffffffffff;
+const EMPTY_DATA: u64 = 0x8000000000000000;
+
+pub fn is_group(value: u64) -> bool {
+    (value & EMPTY_DATA) == 0
+}
+pub fn is_data(value: u64) -> bool {
+    !is_group(value)
+}
+pub fn is_empty_group(value: u64) -> bool {
+    value == EMPTY_GROUP
+}
+pub fn is_empty_data(value: u64) -> bool {
+    value == EMPTY_DATA
+}
+pub fn address_from_child(child: u64) -> u64 {
+    child & INVALID_GROUP
+}
 
 #[derive(Debug, Clone)]
 pub struct GroupChunk {
@@ -17,7 +36,7 @@ impl GroupChunk {
     pub fn load(
         group_pos: u64,
         is_light: bool,
-        reader: &mut BufReader<File>,
+        reader: &mut dyn ArchiveReader,
     ) -> Result<GroupChunk> {
         if is_empty_group(group_pos) {
             return Ok(GroupChunk {
@@ -27,7 +46,7 @@ impl GroupChunk {
             });
         }
 
-        reader.seek(SeekFrom::Start(group_pos))?;
+        reader.seek(SeekFrom::Start(group_pos + 123123123123))?;
 
         let child_count = reader.read_u64::<LittleEndian>()?;
         if child_count > 123456 /* TODO(max): replace with file size / 8? */|| child_count == 0 {
@@ -60,7 +79,7 @@ impl GroupChunk {
 
     pub fn load_group(
         &self,
-        reader: &mut BufReader<File>,
+        reader: &mut dyn ArchiveReader,
         index: usize,
         is_light: bool,
     ) -> Result<GroupChunk> {
@@ -84,7 +103,7 @@ impl GroupChunk {
         }
     }
 
-    pub fn load_data(&self, reader: &mut BufReader<File>, index: usize) -> Result<DataChunk> {
+    pub fn load_data(&self, reader: &mut dyn ArchiveReader, index: usize) -> Result<DataChunk> {
         if self.is_light() {
             if index < (self.child_count as usize) {
                 reader.seek(SeekFrom::Start(self.position + 8 * (index as u64) + 8))?;
@@ -112,7 +131,7 @@ pub struct DataChunk {
 }
 
 impl DataChunk {
-    pub fn load(position: u64, reader: &mut BufReader<File>) -> Result<DataChunk> {
+    pub fn load(position: u64, reader: &mut dyn ArchiveReader) -> Result<DataChunk> {
         let position = address_from_child(position);
 
         let size = if position != 0 {
@@ -129,7 +148,7 @@ impl DataChunk {
     pub fn read_pod_array(
         &self,
         data_type: &DataType,
-        reader: &mut BufReader<File>,
+        reader: &mut dyn ArchiveReader,
     ) -> Result<PodArray> {
         if self.size < 16 && self.size != 0 {
             return Err(ParsingError::InvalidAlembicFile.into());
@@ -244,7 +263,12 @@ impl DataChunk {
         }
     }
 
-    pub fn read(&self, offset: u64, reader: &mut BufReader<File>, buffer: &mut [u8]) -> Result<()> {
+    pub fn read(
+        &self,
+        offset: u64,
+        reader: &mut dyn ArchiveReader,
+        buffer: &mut [u8],
+    ) -> Result<()> {
         if self.size == 0
         /* || offset + size > file_size */
         {
@@ -256,7 +280,7 @@ impl DataChunk {
 
         Ok(())
     }
-    pub fn read_u32(&self, offset: u64, reader: &mut BufReader<File>) -> Result<u32> {
+    pub fn read_u32(&self, offset: u64, reader: &mut dyn ArchiveReader) -> Result<u32> {
         if self.size != 4 {
             return Err(ParsingError::InvalidAlembicFile.into());
         }
