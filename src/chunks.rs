@@ -46,10 +46,10 @@ impl GroupChunk {
             });
         }
 
-        reader.seek(SeekFrom::Start(group_pos + 123123123123))?;
+        reader.seek(SeekFrom::Start(group_pos))?;
 
         let child_count = reader.read_u64::<LittleEndian>()?;
-        if child_count > 123456 /* TODO(max): replace with file size / 8? */|| child_count == 0 {
+        if child_count > reader.size() / 8 || child_count == 0 {
             return Ok(GroupChunk {
                 position: group_pos,
                 child_count: 0,
@@ -269,9 +269,7 @@ impl DataChunk {
         reader: &mut dyn ArchiveReader,
         buffer: &mut [u8],
     ) -> Result<()> {
-        if self.size == 0
-        /* || offset + size > file_size */
-        {
+        if self.size == 0 || offset + self.size > reader.size() {
             return Err(ParsingError::InvalidAlembicFile.into());
         }
 
