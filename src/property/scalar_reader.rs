@@ -1,5 +1,9 @@
 use super::PropertyHeader;
-use crate::*;
+use crate::chunks::*;
+use crate::pod::*;
+use crate::reader::ArchiveReader;
+use crate::result::*;
+use std::rc::Rc;
 
 #[derive(Debug)]
 pub struct ScalarPropertyReader {
@@ -18,7 +22,7 @@ impl ScalarPropertyReader {
     pub fn sample_count(&self) -> u32 {
         self.header.next_sample_index
     }
-    pub fn load_sample(&self, index: u32, reader: &mut BufReader<File>) -> Result<PodArray> {
+    pub fn load_sample(&self, index: u32, reader: &mut dyn ArchiveReader) -> Result<PodArray> {
         if index >= self.header.next_sample_index {
             return Err(UserError::OutOfBounds.into());
         }
@@ -27,7 +31,7 @@ impl ScalarPropertyReader {
         let data = self.group.load_data(reader, index)?;
         data.read_pod_array(&self.header.data_type, reader)
     }
-    pub fn sample_size(&self, index: u32, reader: &mut BufReader<File>) -> Result<usize> {
+    pub fn sample_size(&self, index: u32, reader: &mut dyn ArchiveReader) -> Result<usize> {
         if index >= self.header.next_sample_index {
             return Err(UserError::OutOfBounds.into());
         }

@@ -1,9 +1,8 @@
 use byteorder::{LittleEndian, ReadBytesExt};
-use std::fs::File;
-use std::io::BufReader;
 use std::rc::Rc;
 
 use crate::chunks::DataChunk;
+use crate::reader::ArchiveReader;
 use crate::result::*;
 
 const ACYCLIC_NUM_SAMPLES: u32 = u32::MAX;
@@ -21,7 +20,7 @@ pub struct TimeSampling {
 
 pub(crate) fn read_time_samplings_and_max(
     data: &DataChunk,
-    reader: &mut BufReader<File>,
+    reader: &mut dyn ArchiveReader,
 ) -> Result<(Vec<Rc<TimeSampling>>, Vec<i64>)> {
     let mut buffer = vec![0u8; data.size as usize];
     data.read(0, reader, &mut buffer)?;

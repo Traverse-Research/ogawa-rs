@@ -1,13 +1,13 @@
+use crate::reader::{ArchiveReader, StringReader};
 use byteorder::{LittleEndian, ReadBytesExt};
 use std::collections::HashMap;
 use std::rc::Rc;
 
-use std::fs::File;
-use std::io::BufReader;
-
+use crate::chunks::*;
 use crate::metadata::*;
 use crate::property::*;
-use crate::*;
+use crate::result::*;
+use crate::time_sampling::TimeSampling;
 
 #[derive(Debug, Clone)]
 pub struct ObjectHeader {
@@ -28,7 +28,7 @@ impl ObjectReader {
     pub fn new(
         group: Rc<GroupChunk>,
         parent_name: &str,
-        reader: &mut BufReader<File>,
+        reader: &mut dyn ArchiveReader,
         indexed_meta_data: &[MetaData],
         time_samplings: &[Rc<TimeSampling>],
         header: Rc<ObjectHeader>,
@@ -81,7 +81,7 @@ impl ObjectReader {
     pub fn load_child(
         &self,
         index: usize,
-        reader: &mut BufReader<File>,
+        reader: &mut dyn ArchiveReader,
         indexed_meta_data: &[MetaData],
         time_samplings: &[Rc<TimeSampling>],
     ) -> Result<ObjectReader> {
@@ -107,7 +107,7 @@ fn read_object_headers(
     group: &GroupChunk,
     index: usize,
     parent_name: &str,
-    reader: &mut BufReader<File>,
+    reader: &mut dyn ArchiveReader,
     indexed_meta_data: &[MetaData],
 ) -> Result<Vec<ObjectHeader>> {
     let data = group.load_data(reader, index)?;

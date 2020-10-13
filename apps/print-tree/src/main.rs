@@ -1,9 +1,7 @@
 use ogawa_rs::*;
-use std::fs::File;
-use std::io::BufReader;
 use std::rc::Rc;
 
-fn print_chunk_tree(root_group: &GroupChunk, reader: &mut BufReader<File>) -> Result<()> {
+fn print_chunk_tree(root_group: &GroupChunk, reader: &mut dyn ArchiveReader) -> Result<()> {
     let mut total_data_size = 0;
     let mut data_count = 0;
     let mut group_count = 0;
@@ -59,9 +57,8 @@ fn print_chunk_tree(root_group: &GroupChunk, reader: &mut BufReader<File>) -> Re
     Ok(())
 }
 
-fn print_object_structure(reader: &mut FileReader, archive: &Archive) -> Result<()> {
+fn print_object_structure(reader: &mut dyn ArchiveReader, archive: &Archive) -> Result<()> {
     let object_reader = archive.load_root_object(reader)?;
-    let file = &mut reader.file;
 
     let mut stack = vec![(0, object_reader)];
 
@@ -79,8 +76,12 @@ fn print_object_structure(reader: &mut FileReader, archive: &Archive) -> Result<
 
         let child_count = current.child_map.len();
         for i in 0..child_count {
-            let child =
-                current.load_child(i, file, &archive.indexed_meta_data, &archive.time_samplings)?;
+            let child = current.load_child(
+                i,
+                reader,
+                &archive.indexed_meta_data,
+                &archive.time_samplings,
+            )?;
             stack.push((indent + 1, child));
         }
 
@@ -89,7 +90,7 @@ fn print_object_structure(reader: &mut FileReader, archive: &Archive) -> Result<
         for i in (0..properties.sub_property_count()).rev() {
             let prop = properties.load_sub_property(
                 i,
-                file,
+                reader,
                 &archive.indexed_meta_data,
                 &archive.time_samplings,
             )?;
@@ -107,7 +108,7 @@ fn print_object_structure(reader: &mut FileReader, archive: &Archive) -> Result<
                 for i in (0..properties.sub_property_count()).rev() {
                     let prop = properties.load_sub_property(
                         i,
-                        file,
+                        reader,
                         &archive.indexed_meta_data,
                         &archive.time_samplings,
                     )?;
@@ -133,9 +134,9 @@ fn print_object_structure(reader: &mut FileReader, archive: &Archive) -> Result<
                         for _ in 0..(indent + prop_indent + 1) {
                             print!("|   ");
                         }
-                        let size = pr.sample_size(i, file)?;
+                        let size = pr.sample_size(i, reader)?;
                         print!("scalar data {:?} ({} bytes)", &pr.header.data_type, size);
-                        let sample = pr.load_sample(i, file)?;
+                        let sample = pr.load_sample(i, reader)?;
                         print!("{:?}", &sample);
                         println!();
                     }
@@ -145,9 +146,9 @@ fn print_object_structure(reader: &mut FileReader, archive: &Archive) -> Result<
                         for _ in 0..(indent + prop_indent + 1) {
                             print!("|   ");
                         }
-                        let size = pr.sample_size(i, file)?;
+                        let size = pr.sample_size(i, reader)?;
                         print!("array data {:?} ({} bytes)", &pr.header.data_type, size);
-                        let _sample = pr.load_sample(i, file)?;
+                        let _sample = pr.load_sample(i, reader)?;
                         // print!("{:?}", &sample.len());
                         println!();
                     }
@@ -161,14 +162,18 @@ fn print_object_structure(reader: &mut FileReader, archive: &Archive) -> Result<
 }
 
 fn main() -> ogawa_rs::Result<()> {
-    let mut file_reader = FileReader::new("test_assets/Eyelashes01.abc")?;
-    let archive = Archive::new(&mut file_reader)?;
+    let filepath = "test_assets/Eyelashes01.abc";
+
+    let mut reader = MemMappedReader::new(filepath)?;
+    // let mut reader = FileReader::new(filepath)?;
+
+    let archive = Archive::new(&mut reader)?;
 
     println!("------ print_chunk_tree ------");
-    print_chunk_tree(&archive.root_group, &mut file_reader.file)?;
+    print_chunk_tree(&archive.root_group, &mut reader)?;
 
     println!("------ print_object_structure ------");
-    print_object_structure(&mut file_reader, &archive)?;
+    print_object_structure(&mut reader, &archive)?;
 
     Ok(())
 }
