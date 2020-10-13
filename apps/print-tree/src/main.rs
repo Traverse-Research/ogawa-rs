@@ -162,10 +162,11 @@ fn print_object_structure(reader: &mut dyn ArchiveReader, archive: &Archive) -> 
 }
 
 fn main() -> ogawa_rs::Result<()> {
-    let file = std::fs::File::open("test_assets/Eyelashes01.abc")?;
+    let filepath = "test_assets/Eyelashes01.abc";
 
-    let mut reader = MemMappedReader::new(file)?;
-    //let mut reader = FileReader::new(file)?;
+    let mut reader = MemMappedReader::new(filepath)?;
+    // let mut reader = FileReader::new(filepath)?;
+
     let archive = Archive::new(&mut reader)?;
 
     println!("------ print_chunk_tree ------");
