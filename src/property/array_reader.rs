@@ -1,10 +1,30 @@
 use std::rc::Rc;
 
-use super::PropertyHeader;
+use super::{PropertyHeader, PropertyReader};
 use crate::chunks::*;
 use crate::pod::*;
 use crate::reader::ArchiveReader;
 use crate::result::*;
+
+pub use std::convert::TryInto;
+
+/*
+struct ArrayPropertyReaderF32x3 {
+    property_reader: ArrayPropertyReader,
+}
+impl ArrayPropertyReaderF32x3 {
+    fn new(property_reader: ArrayPropertyReader) -> Result<Self, ParsingError> {
+        if property_reader.header.data_type.pod_type != PodType::F32 || property_reader.header.data_type.extent != 3 {
+            return Err(ParsingError::IncompatibleSchema);
+        }
+        Ok(ArrayPropertyReaderF32x3 { property_reader })
+    }
+    fn read(&self, reader: &ArchiveReader) -> Vec<[f32; 3]> {
+        self.property_reader.load_sample(0, reader)
+    }
+}
+*/
+
 #[derive(Debug)]
 pub struct ArrayPropertyReader {
     pub group: Rc<GroupChunk>,
@@ -39,5 +59,16 @@ impl ArrayPropertyReader {
         let index = self.header.map_index(index);
         let data = self.group.load_data(reader, index)?;
         Ok(data.size as usize)
+    }
+}
+
+impl std::convert::TryFrom<PropertyReader> for ArrayPropertyReader {
+    type Error = ParsingError;
+    fn try_from(reader: PropertyReader) -> Result<Self, Self::Error> {
+        if let PropertyReader::Array(r) = reader {
+            Ok(r)
+        } else {
+            Err(ParsingError::IncompatibleSchema)
+        }
     }
 }

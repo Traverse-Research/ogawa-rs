@@ -9,6 +9,7 @@ mod pod;
 mod property;
 mod reader;
 mod result;
+mod schemas;
 mod time_sampling;
 
 pub use chunks::*;
@@ -18,6 +19,7 @@ pub use pod::*;
 pub use property::*;
 pub use reader::{ArchiveReader, FileReader, MemMappedReader};
 pub use result::{InternalError, OgawaError, ParsingError, Result, UserError};
+pub use schemas::CurvesSchema;
 pub use time_sampling::{TimeSampling, TimeSamplingType};
 
 pub struct Archive {

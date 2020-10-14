@@ -12,6 +12,8 @@ use crate::reader::{ArchiveReader, StringReader};
 use crate::result::*;
 use crate::time_sampling::TimeSampling;
 
+pub use std::convert::TryInto;
+
 #[derive(Debug)]
 pub struct CompoundPropertyReader {
     pub(crate) group: Rc<GroupChunk>,
@@ -110,6 +112,27 @@ impl CompoundPropertyReader {
                 PropertyReader::Scalar(ScalarPropertyReader::new(group, header.clone()))
             }
         })
+    }
+
+    pub fn load_sub_property_by_name(
+        &self,
+        name: &str,
+        reader: &mut dyn ArchiveReader,
+        indexed_meta_data: &[MetaData],
+        time_samplings: &[Rc<TimeSampling>],
+    ) -> Result<Option<PropertyReader>> {
+        let index = if let Some(index) = self.find_sub_property_index(name) {
+            index
+        } else {
+            return Ok(None);
+        };
+
+        Ok(Some(self.load_sub_property(
+            index,
+            reader,
+            indexed_meta_data,
+            time_samplings,
+        )?))
     }
 }
 
@@ -234,4 +257,15 @@ fn read_property_headers(
     }
 
     Ok(output_headers)
+}
+
+impl std::convert::TryFrom<PropertyReader> for CompoundPropertyReader {
+    type Error = ParsingError;
+    fn try_from(reader: PropertyReader) -> Result<Self, Self::Error> {
+        if let PropertyReader::Compound(r) = reader {
+            Ok(r)
+        } else {
+            Err(ParsingError::IncompatibleSchema)
+        }
+    }
 }

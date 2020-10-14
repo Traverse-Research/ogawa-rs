@@ -1,9 +1,11 @@
-use super::PropertyHeader;
+use super::{PropertyHeader, PropertyReader};
 use crate::chunks::*;
 use crate::pod::*;
 use crate::reader::ArchiveReader;
 use crate::result::*;
 use std::rc::Rc;
+
+pub use std::convert::TryInto;
 
 #[derive(Debug)]
 pub struct ScalarPropertyReader {
@@ -39,5 +41,16 @@ impl ScalarPropertyReader {
         let index = self.header.map_index(index);
         let data = self.group.load_data(reader, index)?;
         Ok(data.size as usize)
+    }
+}
+
+impl std::convert::TryFrom<PropertyReader> for ScalarPropertyReader {
+    type Error = ParsingError;
+    fn try_from(reader: PropertyReader) -> Result<Self, Self::Error> {
+        if let PropertyReader::Scalar(r) = reader {
+            Ok(r)
+        } else {
+            Err(ParsingError::IncompatibleSchema)
+        }
     }
 }

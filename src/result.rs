@@ -5,6 +5,7 @@ pub enum InternalError {
     DataChunkReadAsGroupChunk,
     OutOfBounds,
     Unreachable,
+    InvalidChunkBy,
 }
 impl std::fmt::Display for InternalError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -13,6 +14,10 @@ impl std::fmt::Display for InternalError {
             InternalError::DataChunkReadAsGroupChunk => write!(f, "DataChunk read as group."),
             InternalError::OutOfBounds => write!(f, "Out of bounds access."),
             InternalError::Unreachable => write!(f, "Unreachable code was reached."),
+            InternalError::InvalidChunkBy => write!(
+                f,
+                "Attempted to chunk data in vector that is not compatible to the target type."
+            ),
         }
     }
 }
@@ -23,6 +28,9 @@ pub enum ParsingError {
     InvalidAlembicFile,
     #[error("Unsupported Alembic File")]
     UnsupportedAlembicFile,
+
+    #[error("Cannot parse schema on object structure")]
+    IncompatibleSchema,
 
     #[error(transparent)]
     FromUtf8Error(#[from] std::string::FromUtf8Error),
