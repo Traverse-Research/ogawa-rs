@@ -1,4 +1,3 @@
-use super::base_geom_schema::BaseGeomSchema;
 use crate::object_reader::ObjectReader;
 use crate::pod::*;
 use crate::property::*;
@@ -75,7 +74,7 @@ impl XformSchema {
                 &archive.time_samplings,
             )?
             .map(|x| {
-                let data_type = match &x {
+                let _data_type = match &x {
                     PropertyReader::Array(r) => &r.header.data_type,
                     PropertyReader::Scalar(r) => &r.header.data_type,
                     _ => return Err(ParsingError::IncompatibleSchema),
