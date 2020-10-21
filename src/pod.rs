@@ -148,6 +148,11 @@ pub fn chunk_vector_by_4<T>(mut vector: Vec<T>) -> Result<Vec<[T; 4]>, InternalE
     Ok(vector)
 }
 
+pub const BOOL_TYPE: DataType = DataType {
+    pod_type: PodType::Boolean,
+    extent: 1,
+};
+
 pub const U8_TYPE: DataType = DataType {
     pod_type: PodType::U8,
     extent: 1,
@@ -185,4 +190,9 @@ pub const F32X3_TYPE: DataType = DataType {
 pub const F32X4_TYPE: DataType = DataType {
     pod_type: PodType::F32,
     extent: 4,
+};
+
+pub const BOX_TYPE: DataType = DataType {
+    pod_type: PodType::F64,
+    extent: 6,
 };

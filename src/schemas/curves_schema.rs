@@ -1,3 +1,4 @@
+use super::base_geom_schema::BaseGeomSchema;
 use crate::object_reader::ObjectReader;
 use crate::pod::*;
 use crate::property::*;
@@ -5,12 +6,22 @@ use crate::reader::ArchiveReader;
 use crate::result::*;
 use crate::Archive;
 
+#[derive(Debug, PartialEq, Eq)]
+pub enum TopologyVariance {
+    ConstantTopology,
+    HomogeneousTopology,
+    HeterogeneousTopology,
+}
+
 #[derive(Debug)]
 pub struct CurvesSchema {
-    p: ArrayPropertyReader,
+    base_geom: BaseGeomSchema,
+
+    positions: ArrayPropertyReader,
     n_vertices: ArrayPropertyReader,
     curve_basis_and_type: ScalarPropertyReader,
 
+    position_weights: Option<ArrayPropertyReader>,
     uv: Option<ArrayPropertyReader>,
     n: Option<ArrayPropertyReader>,
     width: Option<ArrayPropertyReader>,
@@ -37,8 +48,9 @@ impl CurvesSchema {
             )?
             .try_into()?;
 
-        println!("attempting to parse P");
-        let p: ArrayPropertyReader = properties
+        let base_geom = BaseGeomSchema::new_from_properties(&properties, reader, archive)?;
+
+        let positions: ArrayPropertyReader = properties
             .load_sub_property_by_name(
                 "P",
                 reader,
@@ -47,11 +59,10 @@ impl CurvesSchema {
             )?
             .ok_or(ParsingError::IncompatibleSchema)?
             .try_into()?;
-        if p.header.data_type != F32X3_TYPE {
+        if positions.header.data_type != F32X3_TYPE {
             return Err(ParsingError::IncompatibleSchema.into());
         }
 
-        println!("attempting to parse nVertices");
         let n_vertices: ArrayPropertyReader = properties
             .load_sub_property_by_name(
                 "nVertices",
@@ -65,7 +76,6 @@ impl CurvesSchema {
             return Err(ParsingError::IncompatibleSchema.into());
         }
 
-        println!("attempting to parse curveBasisAndType");
         let curve_basis_and_type: ScalarPropertyReader = properties
             .load_sub_property_by_name(
                 "curveBasisAndType",
@@ -76,7 +86,23 @@ impl CurvesSchema {
             .ok_or(ParsingError::IncompatibleSchema)?
             .try_into()?;
 
-        println!("attempting to parse uv");
+        let position_weights = properties
+            .load_sub_property_by_name(
+                "w",
+                reader,
+                &archive.indexed_meta_data,
+                &archive.time_samplings,
+            )?
+            .map(|x| {
+                let x: ArrayPropertyReader = x.try_into()?;
+                if x.header.data_type == F32_TYPE {
+                    Ok(x)
+                } else {
+                    Err(ParsingError::IncompatibleSchema)
+                }
+            })
+            .transpose()?;
+
         let uv = properties
             .load_sub_property_by_name(
                 "uv",
@@ -94,7 +120,6 @@ impl CurvesSchema {
             })
             .transpose()?;
 
-        println!("attempting to parse N");
         let n = properties
             .load_sub_property_by_name(
                 "N",
@@ -112,7 +137,6 @@ impl CurvesSchema {
             })
             .transpose()?;
 
-        println!("attempting to parse width");
         let width = properties
             .load_sub_property_by_name(
                 "width",
@@ -130,7 +154,6 @@ impl CurvesSchema {
             })
             .transpose()?;
 
-        println!("attempting to parse velocities");
         let velocities = properties
             .load_sub_property_by_name(
                 ".velocities",
@@ -148,7 +171,6 @@ impl CurvesSchema {
             })
             .transpose()?;
 
-        println!("attempting to parse .orders");
         let orders = properties
             .load_sub_property_by_name(
                 ".orders",
@@ -166,7 +188,6 @@ impl CurvesSchema {
             })
             .transpose()?;
 
-        println!("attempting to parse .knots");
         let knots = properties
             .load_sub_property_by_name(
                 ".knots",
@@ -185,9 +206,11 @@ impl CurvesSchema {
             .transpose()?;
 
         Ok(Self {
-            p,
+            base_geom,
+            positions,
             n_vertices,
             curve_basis_and_type,
+            position_weights,
             uv,
             n,
             width,
@@ -197,6 +220,29 @@ impl CurvesSchema {
         })
     }
 
+    pub fn topology_variance(&self) -> TopologyVariance {
+        if self.n_vertices.is_constant() && self.curve_basis_and_type.is_constant() {
+            let is_points_constant = self.positions.is_constant()
+                && if let Some(w) = &self.position_weights {
+                    w.is_constant()
+                } else {
+                    true
+                };
+            if is_points_constant {
+                TopologyVariance::ConstantTopology
+            } else {
+                TopologyVariance::HomogeneousTopology
+            }
+        } else {
+            TopologyVariance::HeterogeneousTopology
+        }
+    }
+    pub fn is_constant(&self) -> bool {
+        self.topology_variance() == TopologyVariance::ConstantTopology
+    }
+    pub fn has_position_weights(&self) -> bool {
+        self.position_weights.is_some()
+    }
     pub fn has_uv(&self) -> bool {
         self.uv.is_some()
     }
@@ -221,7 +267,7 @@ impl CurvesSchema {
         sample_index: u32,
         reader: &mut dyn ArchiveReader,
     ) -> Result<Vec<[f32; 3]>> {
-        let pod_array = self.p.load_sample(sample_index, reader)?;
+        let pod_array = self.positions.load_sample(sample_index, reader)?;
         let pod_array = if let PodArray::F32(array) = pod_array {
             array
         } else {

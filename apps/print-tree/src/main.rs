@@ -1,5 +1,4 @@
 use ogawa_rs::*;
-use std::rc::Rc;
 
 fn print_chunk_tree(root_group: &GroupChunk, reader: &mut dyn ArchiveReader) -> Result<()> {
     let mut total_data_size = 0;
@@ -72,7 +71,11 @@ fn print_object_structure(reader: &mut dyn ArchiveReader, archive: &Archive) -> 
         for _ in 0..indent {
             print!("|   ");
         }
-        println!("name: {}", &header.full_name);
+        println!(
+            "object: {} (metadata: {})",
+            &header.full_name,
+            header.meta_data.serialize()
+        );
 
         let child_count = current.child_map.len();
         for i in 0..child_count {
@@ -94,7 +97,7 @@ fn print_object_structure(reader: &mut dyn ArchiveReader, archive: &Archive) -> 
                 &archive.indexed_meta_data,
                 &archive.time_samplings,
             )?;
-            prop_stack.push((1, Rc::new(prop)));
+            prop_stack.push((1, prop));
         }
 
         loop {
@@ -104,7 +107,7 @@ fn print_object_structure(reader: &mut dyn ArchiveReader, archive: &Archive) -> 
 
             let (prop_indent, properties) = prop_stack.pop().unwrap();
 
-            if let PropertyReader::Compound(properties) = properties.as_ref() {
+            if let PropertyReader::Compound(properties) = &properties {
                 for i in (0..properties.sub_property_count()).rev() {
                     let prop = properties.load_sub_property(
                         i,
@@ -113,22 +116,25 @@ fn print_object_structure(reader: &mut dyn ArchiveReader, archive: &Archive) -> 
                         &archive.time_samplings,
                     )?;
 
-                    prop_stack.push(((prop_indent + 1), Rc::new(prop)));
+                    prop_stack.push(((prop_indent + 1), prop));
                 }
             }
 
             let prop_name = properties.name().to_owned();
-            let typename = match properties.as_ref() {
-                PropertyReader::Array(_) => "array",
-                PropertyReader::Compound(_) => "compound",
-                PropertyReader::Scalar(_) => "scalar",
+            let (typename, metadata) = match &properties {
+                PropertyReader::Array(r) => ("array", r.header.meta_data.serialize()),
+                PropertyReader::Compound(r) => ("compound", r.header.meta_data.serialize()),
+                PropertyReader::Scalar(r) => ("scalar", r.header.meta_data.serialize()),
             };
             for _ in 0..(indent + prop_indent) {
                 print!("|   ");
             }
-            println!("prop({}): {}", typename, prop_name);
+            println!(
+                "prop(type: {}, metadata: {}): {}",
+                typename, metadata, prop_name
+            );
 
-            match properties.as_ref() {
+            match &properties {
                 PropertyReader::Scalar(pr) => {
                     for i in 0..pr.sample_count() {
                         for _ in 0..(indent + prop_indent + 1) {

@@ -16,15 +16,15 @@ pub use std::convert::TryInto;
 
 #[derive(Debug)]
 pub struct CompoundPropertyReader {
-    pub(crate) group: Rc<GroupChunk>,
-    pub(crate) property_headers: Vec<PropertyHeader>,
-    pub(crate) sub_properties: HashMap<String, usize>,
-    pub(crate) header: PropertyHeader,
+    pub group: GroupChunk,
+    pub property_headers: Vec<PropertyHeader>,
+    pub sub_properties: HashMap<String, usize>,
+    pub header: PropertyHeader,
 }
 
 impl CompoundPropertyReader {
     pub fn new(
-        group: Rc<GroupChunk>,
+        group: GroupChunk,
         meta_data: MetaData,
         reader: &mut dyn ArchiveReader,
         indexed_meta_data: &[MetaData],
@@ -96,7 +96,7 @@ impl CompoundPropertyReader {
             .get(index)
             .ok_or(UserError::OutOfBounds)?;
 
-        let group = Rc::new(self.group.load_group(reader, index, false)?);
+        let group = self.group.load_group(reader, index, false)?;
         Ok(match header.property_type {
             PropertyType::Array => {
                 PropertyReader::Array(ArrayPropertyReader::new(group, header.clone()))

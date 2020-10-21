@@ -1,5 +1,3 @@
-use std::rc::Rc;
-
 use super::{PropertyHeader, PropertyReader};
 use crate::chunks::*;
 use crate::pod::*;
@@ -8,37 +6,23 @@ use crate::result::*;
 
 pub use std::convert::TryInto;
 
-/*
-struct ArrayPropertyReaderF32x3 {
-    property_reader: ArrayPropertyReader,
-}
-impl ArrayPropertyReaderF32x3 {
-    fn new(property_reader: ArrayPropertyReader) -> Result<Self, ParsingError> {
-        if property_reader.header.data_type.pod_type != PodType::F32 || property_reader.header.data_type.extent != 3 {
-            return Err(ParsingError::IncompatibleSchema);
-        }
-        Ok(ArrayPropertyReaderF32x3 { property_reader })
-    }
-    fn read(&self, reader: &ArchiveReader) -> Vec<[f32; 3]> {
-        self.property_reader.load_sample(0, reader)
-    }
-}
-*/
-
 #[derive(Debug)]
 pub struct ArrayPropertyReader {
-    pub group: Rc<GroupChunk>,
+    pub group: GroupChunk,
     pub header: PropertyHeader,
 }
 
 impl ArrayPropertyReader {
-    pub fn new(group: Rc<GroupChunk>, header: PropertyHeader) -> Self {
+    pub fn new(group: GroupChunk, header: PropertyHeader) -> Self {
         Self { group, header }
     }
     pub fn name(&self) -> &str {
         &self.header.name
     }
 
+    pub fn is_constant(&self) -> bool {
+        self.header.first_changed_index == 0
+    }
     pub fn sample_count(&self) -> u32 {
         self.header.next_sample_index
     }
