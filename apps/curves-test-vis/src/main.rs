@@ -150,7 +150,7 @@ fn main() -> Result<(), Error> {
                 let p = glam::Vec3::from_slice_unaligned(p) / 25.0;
                 let p = vp * p.extend(1.0);
 
-                // near plane 'clipping'
+                // frustum culling
                 if p.x() < -p.w()
                     || p.x() > p.w()
                     || p.y() < -p.w()
