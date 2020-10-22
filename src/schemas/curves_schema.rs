@@ -30,6 +30,38 @@ pub struct CurvesSchema {
     knots: Option<ArrayPropertyReader>,
 }
 
+fn load_sub_property(
+    name: &str,
+    properties: &CompoundPropertyReader,
+    reader: &mut dyn ArchiveReader,
+    archive: &Archive,
+    data_type: Option<&DataType>,
+) -> Result<Option<PropertyReader>> {
+    let prop = properties
+        .load_sub_property_by_name(
+            name,
+            reader,
+            &archive.indexed_meta_data,
+            &archive.time_samplings,
+        )?
+        .map(|prop| {
+            if let Some(data_type) = data_type {
+                let does_data_type_match = match &prop {
+                    PropertyReader::Array(reader) => reader.header.data_type == *data_type,
+                    PropertyReader::Scalar(reader) => reader.header.data_type == *data_type,
+                    PropertyReader::Compound(reader) => reader.header.data_type == *data_type,
+                };
+                if !does_data_type_match {
+                    return Err(ParsingError::IncompatibleSchema);
+                }
+            }
+            Ok(prop)
+        })
+        .transpose()?;
+
+    Ok(prop)
+}
+
 impl CurvesSchema {
     pub fn new_from_object_reader(
         object: &ObjectReader,
@@ -50,159 +82,46 @@ impl CurvesSchema {
 
         let base_geom = BaseGeomSchema::new_from_properties(&properties, reader, archive)?;
 
-        let positions: ArrayPropertyReader = properties
-            .load_sub_property_by_name(
-                "P",
-                reader,
-                &archive.indexed_meta_data,
-                &archive.time_samplings,
-            )?
-            .ok_or(ParsingError::IncompatibleSchema)?
-            .try_into()?;
-        if positions.header.data_type != F32X3_TYPE {
-            return Err(ParsingError::IncompatibleSchema.into());
-        }
+        let positions: ArrayPropertyReader =
+            load_sub_property("P", &properties, reader, archive, Some(&F32X3_TYPE))?
+                .ok_or(ParsingError::IncompatibleSchema)?
+                .try_into()?;
+        let n_vertices: ArrayPropertyReader =
+            load_sub_property("nVertices", &properties, reader, archive, Some(&I32_TYPE))?
+                .ok_or(ParsingError::IncompatibleSchema)?
+                .try_into()?;
+        let curve_basis_and_type: ScalarPropertyReader =
+            load_sub_property("curveBasisAndType", &properties, reader, archive, None)?
+                .ok_or(ParsingError::IncompatibleSchema)?
+                .try_into()?;
 
-        let n_vertices: ArrayPropertyReader = properties
-            .load_sub_property_by_name(
-                "nVertices",
-                reader,
-                &archive.indexed_meta_data,
-                &archive.time_samplings,
-            )?
-            .ok_or(ParsingError::IncompatibleSchema)?
-            .try_into()?;
-        if n_vertices.header.data_type != I32_TYPE {
-            return Err(ParsingError::IncompatibleSchema.into());
-        }
-
-        let curve_basis_and_type: ScalarPropertyReader = properties
-            .load_sub_property_by_name(
-                "curveBasisAndType",
-                reader,
-                &archive.indexed_meta_data,
-                &archive.time_samplings,
-            )?
-            .ok_or(ParsingError::IncompatibleSchema)?
-            .try_into()?;
-
-        let position_weights = properties
-            .load_sub_property_by_name(
-                "w",
-                reader,
-                &archive.indexed_meta_data,
-                &archive.time_samplings,
-            )?
-            .map(|x| {
-                let x: ArrayPropertyReader = x.try_into()?;
-                if x.header.data_type == F32_TYPE {
-                    Ok(x)
-                } else {
-                    Err(ParsingError::IncompatibleSchema)
-                }
-            })
+        let position_weights =
+            load_sub_property("w", &properties, reader, archive, Some(&F32_TYPE))?
+                .map(|x| x.try_into())
+                .transpose()?;
+        let uv = load_sub_property("uv", &properties, reader, archive, Some(&F32X2_TYPE))?
+            .map(|x| x.try_into())
             .transpose()?;
-
-        let uv = properties
-            .load_sub_property_by_name(
-                "uv",
-                reader,
-                &archive.indexed_meta_data,
-                &archive.time_samplings,
-            )?
-            .map(|x| {
-                let x: ArrayPropertyReader = x.try_into()?;
-                if x.header.data_type == F32X2_TYPE {
-                    Ok(x)
-                } else {
-                    Err(ParsingError::IncompatibleSchema)
-                }
-            })
+        let n = load_sub_property("n", &properties, reader, archive, Some(&F32X3_TYPE))?
+            .map(|x| x.try_into())
             .transpose()?;
-
-        let n = properties
-            .load_sub_property_by_name(
-                "N",
-                reader,
-                &archive.indexed_meta_data,
-                &archive.time_samplings,
-            )?
-            .map(|x| {
-                let x: ArrayPropertyReader = x.try_into()?;
-                if x.header.data_type == F32X3_TYPE {
-                    Ok(x)
-                } else {
-                    Err(ParsingError::IncompatibleSchema)
-                }
-            })
+        let width = load_sub_property("width", &properties, reader, archive, Some(&F32_TYPE))?
+            .map(|x| x.try_into())
             .transpose()?;
-
-        let width = properties
-            .load_sub_property_by_name(
-                "width",
-                reader,
-                &archive.indexed_meta_data,
-                &archive.time_samplings,
-            )?
-            .map(|x| {
-                let x: ArrayPropertyReader = x.try_into()?;
-                if x.header.data_type == F32_TYPE {
-                    Ok(x)
-                } else {
-                    Err(ParsingError::IncompatibleSchema)
-                }
-            })
+        let velocities = load_sub_property(
+            ".velocities",
+            &properties,
+            reader,
+            archive,
+            Some(&F32X3_TYPE),
+        )?
+        .map(|x| x.try_into())
+        .transpose()?;
+        let orders = load_sub_property(".orders", &properties, reader, archive, Some(&U8_TYPE))?
+            .map(|x| x.try_into())
             .transpose()?;
-
-        let velocities = properties
-            .load_sub_property_by_name(
-                ".velocities",
-                reader,
-                &archive.indexed_meta_data,
-                &archive.time_samplings,
-            )?
-            .map(|x| {
-                let x: ArrayPropertyReader = x.try_into()?;
-                if x.header.data_type == F32X3_TYPE {
-                    Ok(x)
-                } else {
-                    Err(ParsingError::IncompatibleSchema)
-                }
-            })
-            .transpose()?;
-
-        let orders = properties
-            .load_sub_property_by_name(
-                ".orders",
-                reader,
-                &archive.indexed_meta_data,
-                &archive.time_samplings,
-            )?
-            .map(|x| {
-                let x: ArrayPropertyReader = x.try_into()?;
-                if x.header.data_type == U8_TYPE {
-                    Ok(x)
-                } else {
-                    Err(ParsingError::IncompatibleSchema)
-                }
-            })
-            .transpose()?;
-
-        let knots = properties
-            .load_sub_property_by_name(
-                ".knots",
-                reader,
-                &archive.indexed_meta_data,
-                &archive.time_samplings,
-            )?
-            .map(|x| {
-                let x: ArrayPropertyReader = x.try_into()?;
-                if x.header.data_type == F32_TYPE {
-                    Ok(x)
-                } else {
-                    Err(ParsingError::IncompatibleSchema)
-                }
-            })
+        let knots = load_sub_property(".knots", &properties, reader, archive, Some(&F32_TYPE))?
+            .map(|x| x.try_into())
             .transpose()?;
 
         Ok(Self {
