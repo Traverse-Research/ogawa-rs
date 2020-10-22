@@ -15,9 +15,9 @@ use crate::property::*;
 
 #[derive(Debug)]
 pub enum Schema {
-    BaseGeom(BaseGeomSchema),
-    Curves(CurvesSchema),
-    Xform(XformSchema),
+    BaseGeom(Box<BaseGeomSchema>),
+    Curves(Box<CurvesSchema>),
+    Xform(Box<XformSchema>),
 }
 
 impl Schema {
@@ -61,22 +61,43 @@ impl Schema {
 
         let schema_type = schema_type.ok_or(ParsingError::IncompatibleSchema)?;
         match schema_type.as_str() {
-            "AbcGeom_Curve_v2" => Ok(Schema::Curves(CurvesSchema::new_from_object_reader(
-                object, reader, archive,
-            )?)),
-            "AbcGeom_GeomBase_v1" => Ok(Schema::BaseGeom(BaseGeomSchema::new_from_object_reader(
-                object, reader, archive,
-            )?)),
-            "AbcGeom_PolyMesh_v1" => Err(ParsingError::UnsupportedAlembicFile.into()),
-            "AbcGeom_SubD_v1" => Err(ParsingError::UnsupportedAlembicFile.into()),
-            "AbcGeom_NuPatch_v2" => Err(ParsingError::UnsupportedAlembicFile.into()),
-            "AbcGeom_FaceSet_v1" => Err(ParsingError::UnsupportedAlembicFile.into()),
-            "AbcGeom_Points_v1" => Err(ParsingError::UnsupportedAlembicFile.into()),
-            "AbcGeom_Xform_v3" => Ok(Schema::Xform(XformSchema::new_from_object_reader(
-                object, reader, archive,
-            )?)),
-            "AbcGeom_Light_v1" => Err(ParsingError::UnsupportedAlembicFile.into()),
-            "AbcGeom_Camera_v1" => Err(ParsingError::UnsupportedAlembicFile.into()),
+            "AbcGeom_Curve_v2" => Ok(Schema::Curves(Box::new(
+                CurvesSchema::new_from_object_reader(object, reader, archive)?,
+            ))),
+            "AbcGeom_GeomBase_v1" => Ok(Schema::BaseGeom(Box::new(
+                BaseGeomSchema::new_from_object_reader(object, reader, archive)?,
+            ))),
+            "AbcGeom_PolyMesh_v1" => {
+                println!("AbcGeom_PolyMesh_v1 schema not yet implemented.");
+                Err(ParsingError::UnsupportedAlembicFile.into())
+            }
+            "AbcGeom_SubD_v1" => {
+                println!("AbcGeom_SubD_v1 schema not yet implemented.");
+                Err(ParsingError::UnsupportedAlembicFile.into())
+            }
+            "AbcGeom_NuPatch_v2" => {
+                println!("AbcGeom_NuPatch_v2 schema not yet implemented.");
+                Err(ParsingError::UnsupportedAlembicFile.into())
+            }
+            "AbcGeom_FaceSet_v1" => {
+                println!("AbcGeom_FaceSet_v1 schema not yet implemented.");
+                Err(ParsingError::UnsupportedAlembicFile.into())
+            }
+            "AbcGeom_Points_v1" => {
+                println!("AbcGeom_Points_v1 schema not yet implemented.");
+                Err(ParsingError::UnsupportedAlembicFile.into())
+            }
+            "AbcGeom_Xform_v3" => Ok(Schema::Xform(Box::new(
+                XformSchema::new_from_object_reader(object, reader, archive)?,
+            ))),
+            "AbcGeom_Light_v1" => {
+                println!("AbcGeom_Light_v1 schema not yet implemented.");
+                Err(ParsingError::UnsupportedAlembicFile.into())
+            }
+            "AbcGeom_Camera_v1" => {
+                println!("AbcGeom_Camera_v1 schema not yet implemented.");
+                Err(ParsingError::UnsupportedAlembicFile.into())
+            }
             _ => Err(ParsingError::IncompatibleSchema.into()),
         }
     }

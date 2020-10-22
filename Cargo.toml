@@ -17,4 +17,5 @@ vmap = "0.4.2"
 members = [
     "apps/schema-parsing",
     "apps/print-tree",
+    "apps/curves-test-vis",
 ]

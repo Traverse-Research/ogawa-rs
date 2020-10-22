@@ -9,7 +9,7 @@ fn main() -> ogawa_rs::Result<()> {
 
     let mut stack = vec![archive.load_root_object(&mut reader)?];
     loop {
-        if stack.len() == 0 {
+        if stack.is_empty() {
             break;
         }
 
