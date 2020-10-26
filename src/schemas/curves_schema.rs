@@ -5,11 +5,76 @@ use crate::property::*;
 use crate::reader::ArchiveReader;
 use crate::result::*;
 use crate::Archive;
+use std::convert::TryFrom;
+pub use std::convert::TryInto;
 #[derive(Debug, PartialEq, Eq)]
 pub enum TopologyVariance {
     ConstantTopology,
     HomogeneousTopology,
     HeterogeneousTopology,
+}
+
+#[derive(Debug, PartialEq, Eq)]
+pub enum CurvePeriodicity {
+    NonPeriodic = 0,
+    Periodic = 1,
+}
+impl TryFrom<u8> for CurvePeriodicity {
+    type Error = ParsingError;
+
+    fn try_from(v: u8) -> Result<Self, Self::Error> {
+        match v {
+            x if x == CurvePeriodicity::NonPeriodic as u8 => Ok(CurvePeriodicity::NonPeriodic),
+            x if x == CurvePeriodicity::Periodic as u8 => Ok(CurvePeriodicity::Periodic),
+
+            _ => Err(ParsingError::InvalidAlembicFile),
+        }
+    }
+}
+
+#[derive(Debug, PartialEq, Eq)]
+pub enum CurveType {
+    Cubic = 0,
+    Linear = 1,
+    VariableOrder = 2,
+}
+impl TryFrom<u8> for CurveType {
+    type Error = ParsingError;
+
+    fn try_from(v: u8) -> Result<Self, Self::Error> {
+        match v {
+            x if x == CurveType::Cubic as u8 => Ok(CurveType::Cubic),
+            x if x == CurveType::Linear as u8 => Ok(CurveType::Linear),
+            x if x == CurveType::VariableOrder as u8 => Ok(CurveType::VariableOrder),
+
+            _ => Err(ParsingError::InvalidAlembicFile),
+        }
+    }
+}
+
+pub enum BasisType {
+    None = 0,
+    Bezier = 1,
+    Bspline = 2,
+    Catmullrom = 3,
+    Hermite = 4,
+    Power = 5,
+}
+impl TryFrom<u8> for BasisType {
+    type Error = ParsingError;
+
+    fn try_from(v: u8) -> Result<Self, Self::Error> {
+        match v {
+            x if x == BasisType::None as u8 => Ok(BasisType::None),
+            x if x == BasisType::Bezier as u8 => Ok(BasisType::Bezier),
+            x if x == BasisType::Bspline as u8 => Ok(BasisType::Bspline),
+            x if x == BasisType::Catmullrom as u8 => Ok(BasisType::Catmullrom),
+            x if x == BasisType::Hermite as u8 => Ok(BasisType::Hermite),
+            x if x == BasisType::Power as u8 => Ok(BasisType::Power),
+
+            _ => Err(ParsingError::InvalidAlembicFile),
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -44,6 +109,7 @@ impl CurvesSchema {
 
         let base_geom = BaseGeomSchema::new_from_properties(&properties, reader, archive)?;
 
+        // load required properties
         let positions: ArrayPropertyReader = properties
             .load_sub_property_by_name_checked("P", reader, archive, Some(&F32X3_TYPE))?
             .ok_or(ParsingError::IncompatibleSchema)?
@@ -57,6 +123,7 @@ impl CurvesSchema {
             .ok_or(ParsingError::IncompatibleSchema)?
             .try_into()?;
 
+        // load optional properties
         let position_weights = properties
             .load_sub_property_by_name_checked("w", reader, archive, Some(&F32_TYPE))?
             .map(|x| x.try_into())
@@ -141,6 +208,27 @@ impl CurvesSchema {
     }
     pub fn has_knots(&self) -> bool {
         self.knots.is_some()
+    }
+
+    pub fn load_curve_type_sample(
+        &self,
+        sample_index: u32,
+        reader: &mut dyn ArchiveReader,
+    ) -> Result<(CurveType, CurvePeriodicity, BasisType)> {
+        let pod_array = self
+            .curve_basis_and_type
+            .load_sample(sample_index, reader)?;
+        let pod_array = if let PodArray::U8(array) = pod_array {
+            array
+        } else {
+            return Err(InternalError::Unreachable.into());
+        };
+
+        let curve_type = (*pod_array.get(0).ok_or(InternalError::Unreachable)?).try_into()?;
+        let periodicity = (*pod_array.get(1).ok_or(InternalError::Unreachable)?).try_into()?;
+        let basis_type = (*pod_array.get(2).ok_or(InternalError::Unreachable)?).try_into()?;
+
+        Ok((curve_type, periodicity, basis_type))
     }
 
     pub fn load_positions_sample(
