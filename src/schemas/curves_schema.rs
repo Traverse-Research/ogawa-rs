@@ -52,6 +52,7 @@ impl TryFrom<u8> for CurveType {
     }
 }
 
+#[derive(Debug, PartialEq, Eq)]
 pub enum BasisType {
     None = 0,
     Bezier = 1,

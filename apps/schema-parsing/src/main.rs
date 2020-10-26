@@ -36,6 +36,12 @@ fn main() -> ogawa_rs::Result<()> {
                     println!("\tcurves.has_orders() -> {}", curves.has_orders());
                     println!("\tcurves.has_knots() -> {}", curves.has_knots());
 
+                    let (curve_type, curve_periodicity, basis_type) =
+                        curves.load_curve_type_sample(0, &mut reader)?;
+                    println!("\tcurve type: {:?}", curve_type);
+                    println!("\tcurve periodicity: {:?}", curve_periodicity);
+                    println!("\tbasis type: {:?}", basis_type);
+
                     let positions = curves.load_positions_sample(0, &mut reader)?;
                     println!("\tnumber of positions: {}", positions.len());
 
