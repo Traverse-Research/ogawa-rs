@@ -1,3 +1,4 @@
+use crate::Archive;
 use byteorder::{LittleEndian, ReadBytesExt};
 use std::collections::HashMap;
 use std::rc::Rc;
@@ -88,8 +89,7 @@ impl CompoundPropertyReader {
         &self,
         index: usize,
         reader: &mut dyn ArchiveReader,
-        indexed_meta_data: &[MetaData],
-        time_samplings: &[Rc<TimeSampling>],
+        archive: &Archive,
     ) -> Result<PropertyReader> {
         let header = self
             .property_headers
@@ -105,8 +105,8 @@ impl CompoundPropertyReader {
                 group,
                 header.meta_data.clone(),
                 reader,
-                indexed_meta_data,
-                time_samplings,
+                &archive.indexed_meta_data,
+                &archive.time_samplings,
             )?),
             PropertyType::Scalar => {
                 PropertyReader::Scalar(ScalarPropertyReader::new(group, header.clone()))
@@ -118,8 +118,7 @@ impl CompoundPropertyReader {
         &self,
         name: &str,
         reader: &mut dyn ArchiveReader,
-        indexed_meta_data: &[MetaData],
-        time_samplings: &[Rc<TimeSampling>],
+        archive: &Archive,
     ) -> Result<Option<PropertyReader>> {
         let index = if let Some(index) = self.find_sub_property_index(name) {
             index
@@ -127,12 +126,34 @@ impl CompoundPropertyReader {
             return Ok(None);
         };
 
-        Ok(Some(self.load_sub_property(
-            index,
-            reader,
-            indexed_meta_data,
-            time_samplings,
-        )?))
+        Ok(Some(self.load_sub_property(index, reader, archive)?))
+    }
+
+    pub fn load_sub_property_by_name_checked(
+        &self,
+        name: &str,
+        reader: &mut dyn ArchiveReader,
+        archive: &Archive,
+        data_type: Option<&DataType>,
+    ) -> Result<Option<PropertyReader>> {
+        let prop = self
+            .load_sub_property_by_name(name, reader, archive)?
+            .map(|prop| {
+                if let Some(data_type) = data_type {
+                    let does_data_type_match = match &prop {
+                        PropertyReader::Array(reader) => reader.header.data_type == *data_type,
+                        PropertyReader::Scalar(reader) => reader.header.data_type == *data_type,
+                        PropertyReader::Compound(reader) => reader.header.data_type == *data_type,
+                    };
+                    if !does_data_type_match {
+                        return Err(ParsingError::IncompatibleSchema);
+                    }
+                }
+                Ok(prop)
+            })
+            .transpose()?;
+
+        Ok(prop)
     }
 }
 

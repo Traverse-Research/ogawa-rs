@@ -41,14 +41,8 @@ impl Schema {
         if schema_type.is_none() {
             if let Some(props) = object.properties() {
                 if props.sub_property_count() >= 1 {
-                    let cpr: CompoundPropertyReader = props
-                        .load_sub_property(
-                            0,
-                            reader,
-                            &archive.indexed_meta_data,
-                            &archive.time_samplings,
-                        )?
-                        .try_into()?;
+                    let cpr: CompoundPropertyReader =
+                        props.load_sub_property(0, reader, &archive)?.try_into()?;
                     schema_type = cpr
                         .header
                         .meta_data

@@ -5,7 +5,6 @@ use crate::property::*;
 use crate::reader::ArchiveReader;
 use crate::result::*;
 use crate::Archive;
-
 #[derive(Debug, PartialEq, Eq)]
 pub enum TopologyVariance {
     ConstantTopology,
@@ -30,38 +29,6 @@ pub struct CurvesSchema {
     knots: Option<ArrayPropertyReader>,
 }
 
-fn load_sub_property(
-    name: &str,
-    properties: &CompoundPropertyReader,
-    reader: &mut dyn ArchiveReader,
-    archive: &Archive,
-    data_type: Option<&DataType>,
-) -> Result<Option<PropertyReader>> {
-    let prop = properties
-        .load_sub_property_by_name(
-            name,
-            reader,
-            &archive.indexed_meta_data,
-            &archive.time_samplings,
-        )?
-        .map(|prop| {
-            if let Some(data_type) = data_type {
-                let does_data_type_match = match &prop {
-                    PropertyReader::Array(reader) => reader.header.data_type == *data_type,
-                    PropertyReader::Scalar(reader) => reader.header.data_type == *data_type,
-                    PropertyReader::Compound(reader) => reader.header.data_type == *data_type,
-                };
-                if !does_data_type_match {
-                    return Err(ParsingError::IncompatibleSchema);
-                }
-            }
-            Ok(prop)
-        })
-        .transpose()?;
-
-    Ok(prop)
-}
-
 impl CurvesSchema {
     pub fn new_from_object_reader(
         object: &ObjectReader,
@@ -72,55 +39,50 @@ impl CurvesSchema {
             .properties()
             .ok_or(ParsingError::IncompatibleSchema)?;
         let properties: CompoundPropertyReader = properties
-            .load_sub_property(
-                0,
-                reader,
-                &archive.indexed_meta_data,
-                &archive.time_samplings,
-            )?
+            .load_sub_property(0, reader, &archive)?
             .try_into()?;
 
         let base_geom = BaseGeomSchema::new_from_properties(&properties, reader, archive)?;
 
-        let positions: ArrayPropertyReader =
-            load_sub_property("P", &properties, reader, archive, Some(&F32X3_TYPE))?
-                .ok_or(ParsingError::IncompatibleSchema)?
-                .try_into()?;
-        let n_vertices: ArrayPropertyReader =
-            load_sub_property("nVertices", &properties, reader, archive, Some(&I32_TYPE))?
-                .ok_or(ParsingError::IncompatibleSchema)?
-                .try_into()?;
-        let curve_basis_and_type: ScalarPropertyReader =
-            load_sub_property("curveBasisAndType", &properties, reader, archive, None)?
-                .ok_or(ParsingError::IncompatibleSchema)?
-                .try_into()?;
+        let positions: ArrayPropertyReader = properties
+            .load_sub_property_by_name_checked("P", reader, archive, Some(&F32X3_TYPE))?
+            .ok_or(ParsingError::IncompatibleSchema)?
+            .try_into()?;
+        let n_vertices: ArrayPropertyReader = properties
+            .load_sub_property_by_name_checked("nVertices", reader, archive, Some(&I32_TYPE))?
+            .ok_or(ParsingError::IncompatibleSchema)?
+            .try_into()?;
+        let curve_basis_and_type: ScalarPropertyReader = properties
+            .load_sub_property_by_name_checked("curveBasisAndType", reader, archive, None)?
+            .ok_or(ParsingError::IncompatibleSchema)?
+            .try_into()?;
 
-        let position_weights =
-            load_sub_property("w", &properties, reader, archive, Some(&F32_TYPE))?
-                .map(|x| x.try_into())
-                .transpose()?;
-        let uv = load_sub_property("uv", &properties, reader, archive, Some(&F32X2_TYPE))?
+        let position_weights = properties
+            .load_sub_property_by_name_checked("w", reader, archive, Some(&F32_TYPE))?
             .map(|x| x.try_into())
             .transpose()?;
-        let n = load_sub_property("n", &properties, reader, archive, Some(&F32X3_TYPE))?
+        let uv = properties
+            .load_sub_property_by_name_checked("uv", reader, archive, Some(&F32X2_TYPE))?
             .map(|x| x.try_into())
             .transpose()?;
-        let width = load_sub_property("width", &properties, reader, archive, Some(&F32_TYPE))?
+        let n = properties
+            .load_sub_property_by_name_checked("n", reader, archive, Some(&F32X3_TYPE))?
             .map(|x| x.try_into())
             .transpose()?;
-        let velocities = load_sub_property(
-            ".velocities",
-            &properties,
-            reader,
-            archive,
-            Some(&F32X3_TYPE),
-        )?
-        .map(|x| x.try_into())
-        .transpose()?;
-        let orders = load_sub_property(".orders", &properties, reader, archive, Some(&U8_TYPE))?
+        let width = properties
+            .load_sub_property_by_name_checked("width", reader, archive, Some(&F32_TYPE))?
             .map(|x| x.try_into())
             .transpose()?;
-        let knots = load_sub_property(".knots", &properties, reader, archive, Some(&F32_TYPE))?
+        let velocities = properties
+            .load_sub_property_by_name_checked(".velocities", reader, archive, Some(&F32X3_TYPE))?
+            .map(|x| x.try_into())
+            .transpose()?;
+        let orders = properties
+            .load_sub_property_by_name_checked(".orders", reader, archive, Some(&U8_TYPE))?
+            .map(|x| x.try_into())
+            .transpose()?;
+        let knots = properties
+            .load_sub_property_by_name_checked(".knots", reader, archive, Some(&F32_TYPE))?
             .map(|x| x.try_into())
             .transpose()?;
 
