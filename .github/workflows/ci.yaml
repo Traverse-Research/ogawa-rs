@@ -10,6 +10,11 @@ jobs:
         os: [ubuntu-latest, windows-latest]
     runs-on: ${{ matrix.os }}
     steps:
+      - name: Install xkbcommon-sys
+        if: runner.os == 'Linux'
+          run: |
+            sudo apt update
+            sudo apt install libxkbcommon-dev
       - uses: actions/checkout@v2
       - uses: actions/cache@v2
         with:
@@ -34,6 +39,10 @@ jobs:
     name: Lint
     runs-on: ubuntu-latest
     steps:
+      - name: Install xkbcommon-sys
+        run: |
+          sudo apt update
+          sudo apt install libxkbcommon-dev
       - uses: actions/checkout@v2
       - uses: actions/cache@v2
         with:
