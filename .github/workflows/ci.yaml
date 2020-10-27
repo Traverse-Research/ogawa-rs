@@ -12,9 +12,9 @@ jobs:
     steps:
       - name: Install xkbcommon-sys
         if: runner.os == 'Linux'
-          run: |
-            sudo apt update
-            sudo apt install libxkbcommon-dev
+        run: |
+          sudo apt update
+          sudo apt install libxkbcommon-dev
       - uses: actions/checkout@v2
       - uses: actions/cache@v2
         with:
