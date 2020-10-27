@@ -3,7 +3,7 @@ use std::convert::TryFrom;
 pub use std::convert::TryInto;
 
 #[repr(u32)]
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum PodType {
     Boolean = 0,
     U8,
@@ -26,29 +26,6 @@ pub enum PodType {
     WString,
 
     Unknown = 127,
-}
-
-#[derive(Debug)]
-pub enum PodArray {
-    Boolean(Vec<bool>),
-    U8(Vec<u8>),
-    I8(Vec<i8>),
-
-    U16(Vec<u16>),
-    I16(Vec<i16>),
-
-    U32(Vec<u32>),
-    I32(Vec<i32>),
-
-    U64(Vec<u64>),
-    I64(Vec<i64>),
-
-    F16(Vec<half::f16>),
-    F32(Vec<f32>),
-    F64(Vec<f64>),
-
-    String(Vec<String>),
-    WString(Vec<String>),
 }
 
 impl TryFrom<u32> for PodType {
@@ -79,8 +56,143 @@ impl TryFrom<u32> for PodType {
         }
     }
 }
-#[derive(Debug, Clone)]
+
+#[derive(Debug)]
+pub enum PodArray {
+    Boolean(Vec<bool>),
+    U8(Vec<u8>),
+    I8(Vec<i8>),
+
+    U16(Vec<u16>),
+    I16(Vec<i16>),
+
+    U32(Vec<u32>),
+    I32(Vec<i32>),
+
+    U64(Vec<u64>),
+    I64(Vec<i64>),
+
+    F16(Vec<half::f16>),
+    F32(Vec<f32>),
+    F64(Vec<f64>),
+
+    String(Vec<String>),
+    WString(Vec<String>),
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct DataType {
     pub(crate) pod_type: PodType,
     pub(crate) extent: u8,
 }
+
+pub fn chunk_vector_by_2<T>(mut vector: Vec<T>) -> Result<Vec<[T; 2]>, InternalError> {
+    const CHUNK_BY: usize = 2;
+    let raw_ptr = vector.as_mut_ptr();
+    let len = vector.len();
+    let capacity = vector.capacity();
+
+    if len % CHUNK_BY != 0
+        || capacity % CHUNK_BY != 0
+        || std::mem::align_of::<T>() != std::mem::align_of::<[T; 2]>()
+    {
+        return Err(InternalError::InvalidChunkBy);
+    }
+    let vector = unsafe {
+        std::mem::forget(vector);
+        Vec::from_raw_parts(raw_ptr as *mut _, len / CHUNK_BY, capacity / CHUNK_BY)
+    };
+
+    Ok(vector)
+}
+
+pub fn chunk_vector_by_3<T>(mut vector: Vec<T>) -> Result<Vec<[T; 3]>, InternalError> {
+    const CHUNK_BY: usize = 3;
+    let raw_ptr = vector.as_mut_ptr();
+    let len = vector.len();
+    let capacity = vector.capacity();
+
+    if len % CHUNK_BY != 0
+        || capacity % CHUNK_BY != 0
+        || std::mem::align_of::<T>() != std::mem::align_of::<[T; 3]>()
+    {
+        return Err(InternalError::InvalidChunkBy);
+    }
+
+    let vector = unsafe {
+        std::mem::forget(vector);
+        Vec::from_raw_parts(raw_ptr as *mut _, len / CHUNK_BY, capacity / CHUNK_BY)
+    };
+
+    Ok(vector)
+}
+
+pub fn chunk_vector_by_4<T>(mut vector: Vec<T>) -> Result<Vec<[T; 4]>, InternalError> {
+    const CHUNK_BY: usize = 4;
+    let raw_ptr = vector.as_mut_ptr();
+    let len = vector.len();
+    let capacity = vector.capacity();
+
+    if len % CHUNK_BY != 0
+        || capacity % CHUNK_BY != 0
+        || std::mem::align_of::<T>() != std::mem::align_of::<[T; 4]>()
+    {
+        return Err(InternalError::InvalidChunkBy);
+    }
+
+    let vector = unsafe {
+        std::mem::forget(vector);
+        Vec::from_raw_parts(raw_ptr as *mut _, len / CHUNK_BY, capacity / CHUNK_BY)
+    };
+
+    Ok(vector)
+}
+
+pub const BOOL_TYPE: DataType = DataType {
+    pod_type: PodType::Boolean,
+    extent: 1,
+};
+
+pub const U8_TYPE: DataType = DataType {
+    pod_type: PodType::U8,
+    extent: 1,
+};
+
+pub const I32_TYPE: DataType = DataType {
+    pod_type: PodType::I32,
+    extent: 1,
+};
+pub const I32X2_TYPE: DataType = DataType {
+    pod_type: PodType::I32,
+    extent: 2,
+};
+pub const I32X3_TYPE: DataType = DataType {
+    pod_type: PodType::I32,
+    extent: 3,
+};
+pub const I32X4_TYPE: DataType = DataType {
+    pod_type: PodType::I32,
+    extent: 4,
+};
+
+pub const F32_TYPE: DataType = DataType {
+    pod_type: PodType::F32,
+    extent: 1,
+};
+pub const F32X2_TYPE: DataType = DataType {
+    pod_type: PodType::F32,
+    extent: 2,
+};
+pub const F32X3_TYPE: DataType = DataType {
+    pod_type: PodType::F32,
+    extent: 3,
+};
+pub const F32X4_TYPE: DataType = DataType {
+    pod_type: PodType::F32,
+    extent: 4,
+};
+
+pub const BOX_TYPE: DataType = DataType {
+    pod_type: PodType::F64,
+    extent: 6,
+};

@@ -9,6 +9,7 @@ mod pod;
 mod property;
 mod reader;
 mod result;
+mod schemas;
 mod time_sampling;
 
 pub use chunks::*;
@@ -18,6 +19,7 @@ pub use pod::*;
 pub use property::*;
 pub use reader::{ArchiveReader, FileReader, MemMappedReader};
 pub use result::{InternalError, OgawaError, ParsingError, Result, UserError};
+pub use schemas::{CurvesSchema, Schema};
 pub use time_sampling::{TimeSampling, TimeSamplingType};
 
 pub struct Archive {
@@ -112,14 +114,14 @@ impl Archive {
     }
 
     pub fn load_root_object(&self, reader: &mut dyn ArchiveReader) -> Result<ObjectReader> {
-        let group = Rc::new(self.root_group.load_group(reader, 2, false)?);
+        let group = self.root_group.load_group(reader, 2, false)?;
         ObjectReader::new(
             group,
             "",
             reader,
             &self.indexed_meta_data,
             &self.time_samplings,
-            Rc::new(self.root_header.clone()),
+            self.root_header.clone(),
         )
     }
 }

@@ -15,5 +15,7 @@ vmap = "0.4.2"
 
 [workspace]
 members = [
+    "apps/schema-parsing",
     "apps/print-tree",
+    "apps/curves-test-vis",
 ]

@@ -6,7 +6,7 @@ use std::io::{Read, Seek, SeekFrom};
 
 #[derive(Debug, Clone, Default)]
 pub struct MetaData {
-    tokens: BTreeMap<String, String>,
+    pub tokens: BTreeMap<String, String>,
 }
 impl MetaData {
     pub fn deserialize(text: &str) -> MetaData {

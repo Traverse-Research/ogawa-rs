@@ -1,3 +1,4 @@
+use crate::Archive;
 use byteorder::{LittleEndian, ReadBytesExt};
 use std::collections::HashMap;
 use std::rc::Rc;
@@ -12,17 +13,19 @@ use crate::reader::{ArchiveReader, StringReader};
 use crate::result::*;
 use crate::time_sampling::TimeSampling;
 
+pub use std::convert::TryInto;
+
 #[derive(Debug)]
 pub struct CompoundPropertyReader {
-    pub(crate) group: Rc<GroupChunk>,
-    pub(crate) property_headers: Vec<PropertyHeader>,
-    pub(crate) sub_properties: HashMap<String, usize>,
-    pub(crate) header: PropertyHeader,
+    pub group: GroupChunk,
+    pub property_headers: Vec<PropertyHeader>,
+    pub sub_properties: HashMap<String, usize>,
+    pub header: PropertyHeader,
 }
 
 impl CompoundPropertyReader {
     pub fn new(
-        group: Rc<GroupChunk>,
+        group: GroupChunk,
         meta_data: MetaData,
         reader: &mut dyn ArchiveReader,
         indexed_meta_data: &[MetaData],
@@ -86,15 +89,14 @@ impl CompoundPropertyReader {
         &self,
         index: usize,
         reader: &mut dyn ArchiveReader,
-        indexed_meta_data: &[MetaData],
-        time_samplings: &[Rc<TimeSampling>],
+        archive: &Archive,
     ) -> Result<PropertyReader> {
         let header = self
             .property_headers
             .get(index)
             .ok_or(UserError::OutOfBounds)?;
 
-        let group = Rc::new(self.group.load_group(reader, index, false)?);
+        let group = self.group.load_group(reader, index, false)?;
         Ok(match header.property_type {
             PropertyType::Array => {
                 PropertyReader::Array(ArrayPropertyReader::new(group, header.clone()))
@@ -103,13 +105,55 @@ impl CompoundPropertyReader {
                 group,
                 header.meta_data.clone(),
                 reader,
-                indexed_meta_data,
-                time_samplings,
+                &archive.indexed_meta_data,
+                &archive.time_samplings,
             )?),
             PropertyType::Scalar => {
                 PropertyReader::Scalar(ScalarPropertyReader::new(group, header.clone()))
             }
         })
+    }
+
+    pub fn load_sub_property_by_name(
+        &self,
+        name: &str,
+        reader: &mut dyn ArchiveReader,
+        archive: &Archive,
+    ) -> Result<Option<PropertyReader>> {
+        let index = if let Some(index) = self.find_sub_property_index(name) {
+            index
+        } else {
+            return Ok(None);
+        };
+
+        Ok(Some(self.load_sub_property(index, reader, archive)?))
+    }
+
+    pub fn load_sub_property_by_name_checked(
+        &self,
+        name: &str,
+        reader: &mut dyn ArchiveReader,
+        archive: &Archive,
+        data_type: Option<&DataType>,
+    ) -> Result<Option<PropertyReader>> {
+        let prop = self
+            .load_sub_property_by_name(name, reader, archive)?
+            .map(|prop| {
+                if let Some(data_type) = data_type {
+                    let does_data_type_match = match &prop {
+                        PropertyReader::Array(reader) => reader.header.data_type == *data_type,
+                        PropertyReader::Scalar(reader) => reader.header.data_type == *data_type,
+                        PropertyReader::Compound(reader) => reader.header.data_type == *data_type,
+                    };
+                    if !does_data_type_match {
+                        return Err(ParsingError::IncompatibleSchema);
+                    }
+                }
+                Ok(prop)
+            })
+            .transpose()?;
+
+        Ok(prop)
     }
 }
 
@@ -234,4 +278,15 @@ fn read_property_headers(
     }
 
     Ok(output_headers)
+}
+
+impl std::convert::TryFrom<PropertyReader> for CompoundPropertyReader {
+    type Error = ParsingError;
+    fn try_from(reader: PropertyReader) -> Result<Self, Self::Error> {
+        if let PropertyReader::Compound(r) = reader {
+            Ok(r)
+        } else {
+            Err(ParsingError::IncompatibleSchema)
+        }
+    }
 }

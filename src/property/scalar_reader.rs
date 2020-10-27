@@ -1,24 +1,28 @@
-use super::PropertyHeader;
+use super::{PropertyHeader, PropertyReader};
 use crate::chunks::*;
 use crate::pod::*;
 use crate::reader::ArchiveReader;
 use crate::result::*;
-use std::rc::Rc;
+
+pub use std::convert::TryInto;
 
 #[derive(Debug)]
 pub struct ScalarPropertyReader {
-    pub group: Rc<GroupChunk>,
+    pub group: GroupChunk,
     pub header: PropertyHeader,
 }
 
 impl ScalarPropertyReader {
-    pub(crate) fn new(group: Rc<GroupChunk>, header: PropertyHeader) -> Self {
+    pub(crate) fn new(group: GroupChunk, header: PropertyHeader) -> Self {
         Self { group, header }
     }
     pub fn name(&self) -> &str {
         &self.header.name
     }
 
+    pub fn is_constant(&self) -> bool {
+        self.header.first_changed_index == 0
+    }
     pub fn sample_count(&self) -> u32 {
         self.header.next_sample_index
     }
@@ -39,5 +43,16 @@ impl ScalarPropertyReader {
         let index = self.header.map_index(index);
         let data = self.group.load_data(reader, index)?;
         Ok(data.size as usize)
+    }
+}
+
+impl std::convert::TryFrom<PropertyReader> for ScalarPropertyReader {
+    type Error = ParsingError;
+    fn try_from(reader: PropertyReader) -> Result<Self, Self::Error> {
+        if let PropertyReader::Scalar(r) = reader {
+            Ok(r)
+        } else {
+            Err(ParsingError::IncompatibleSchema)
+        }
     }
 }

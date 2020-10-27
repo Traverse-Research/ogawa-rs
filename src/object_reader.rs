@@ -18,20 +18,20 @@ pub struct ObjectHeader {
 
 #[derive(Debug)]
 pub struct ObjectReader {
-    pub header: Rc<ObjectHeader>,
-    pub group: Rc<GroupChunk>,
-    pub cp_reader: Option<Rc<CompoundPropertyReader>>,
+    pub header: ObjectHeader,
+    pub group: GroupChunk,
+    pub cp_reader: Option<CompoundPropertyReader>,
     pub children: Vec<ObjectHeader>,
     pub child_map: HashMap<String, usize>,
 }
 impl ObjectReader {
     pub fn new(
-        group: Rc<GroupChunk>,
+        group: GroupChunk,
         parent_name: &str,
         reader: &mut dyn ArchiveReader,
         indexed_meta_data: &[MetaData],
         time_samplings: &[Rc<TimeSampling>],
-        header: Rc<ObjectHeader>,
+        header: ObjectHeader,
     ) -> Result<Self> {
         let child_count = group.child_count as usize;
 
@@ -43,7 +43,7 @@ impl ObjectReader {
         if child_count > 0 {
             if is_data(group.children[child_count - 1]) {
                 children = read_object_headers(
-                    group.as_ref(),
+                    &group,
                     child_count - 1,
                     parent_name,
                     reader,
@@ -57,15 +57,14 @@ impl ObjectReader {
             }
 
             if is_group(group.children[0]) {
-                let child_group = Rc::new(group.load_group(reader, 0, false)?);
-
-                cp_reader = Some(Rc::new(CompoundPropertyReader::new(
+                let child_group = group.load_group(reader, 0, false)?;
+                cp_reader = Some(CompoundPropertyReader::new(
                     child_group,
                     header.meta_data.clone(),
                     reader,
                     indexed_meta_data,
                     time_samplings,
-                )?));
+                )?);
             }
         }
 
@@ -78,6 +77,10 @@ impl ObjectReader {
         })
     }
 
+    pub fn child_count(&self) -> usize {
+        self.child_map.len()
+    }
+
     pub fn load_child(
         &self,
         index: usize,
@@ -86,7 +89,7 @@ impl ObjectReader {
         time_samplings: &[Rc<TimeSampling>],
     ) -> Result<ObjectReader> {
         let parent_group = &self.group;
-        let child_group = Rc::new(parent_group.load_group(reader, index + 1, false)?);
+        let child_group = parent_group.load_group(reader, index + 1, false)?;
 
         Ok(ObjectReader::new(
             child_group,
@@ -94,12 +97,12 @@ impl ObjectReader {
             reader,
             indexed_meta_data,
             time_samplings,
-            Rc::new(self.children[index].clone()),
+            self.children[index].clone(),
         )?)
     }
 
-    pub fn properties(&self) -> Option<Rc<CompoundPropertyReader>> {
-        self.cp_reader.as_ref().map(|x| Rc::clone(x))
+    pub fn properties(&self) -> Option<&CompoundPropertyReader> {
+        self.cp_reader.as_ref()
     }
 }
 
