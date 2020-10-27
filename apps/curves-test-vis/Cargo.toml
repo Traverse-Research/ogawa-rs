@@ -8,6 +8,6 @@ edition = "2018"
 
 [dependencies]
 ogawa-rs = { path = "../.." }
-minifb = { version = "0.19", default-features = false}
+minifb = { version = "0.19", default-features = false, features = ["wayland"] }
 thiserror = "1.0"
 glam = "0.9"
