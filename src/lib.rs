@@ -41,7 +41,7 @@ impl Archive {
         reader.read_exact(&mut magic)?;
 
         if magic != [0x4f, 0x67, 0x61, 0x77, 0x61] {
-            return Err(ParsingError::InvalidAlembicFile.into());
+            return Err(ParsingError::UnsupportedAlembicFile.into());
         }
 
         let _frozen = reader.read_u8()? == 0xff;
