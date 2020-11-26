@@ -38,4 +38,22 @@ impl BaseGeomSchema {
 
         Ok(Self { self_bounds })
     }
+
+    pub fn load_bounds_sample(
+        &self,
+        sample_index: u32,
+        reader: &mut dyn ArchiveReader,
+    ) -> Result<BoundingBox> {
+        let pod_array = self.self_bounds.load_sample(sample_index, reader)?;
+        let pod_array = if let PodArray::F64(array) = pod_array {
+            array
+        } else {
+            return Err(InternalError::Unreachable.into());
+        };
+
+        Ok(BoundingBox {
+            min: [pod_array[0], pod_array[1], pod_array[2]],
+            max: [pod_array[0], pod_array[1], pod_array[2]],
+        })
+    }
 }

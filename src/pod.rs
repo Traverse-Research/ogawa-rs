@@ -2,6 +2,11 @@ use crate::result::*;
 use std::convert::TryFrom;
 pub use std::convert::TryInto;
 
+pub struct BoundingBox {
+    pub min: [f64; 3],
+    pub max: [f64; 3],
+}
+
 #[repr(u32)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum PodType {
