@@ -211,6 +211,14 @@ impl CurvesSchema {
         self.knots.is_some()
     }
 
+    pub fn load_bounds_sample(
+        &self,
+        sample_index: u32,
+        reader: &mut dyn ArchiveReader,
+    ) -> Result<BoundingBox> {
+        self.base_geom.load_bounds_sample(sample_index, reader)
+    }
+
     pub fn load_curve_type_sample(
         &self,
         sample_index: u32,
