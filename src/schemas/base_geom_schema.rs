@@ -53,7 +53,7 @@ impl BaseGeomSchema {
 
         Ok(BoundingBox {
             min: [pod_array[0], pod_array[1], pod_array[2]],
-            max: [pod_array[0], pod_array[1], pod_array[2]],
+            max: [pod_array[3], pod_array[4], pod_array[5]],
         })
     }
 }
