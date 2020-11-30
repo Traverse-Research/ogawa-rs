@@ -2,7 +2,6 @@ use crate::result::*;
 use std::convert::TryFrom;
 pub use std::convert::TryInto;
 
-
 #[derive(Debug, Clone)]
 pub struct BoundingBox {
     pub min: [f64; 3],
