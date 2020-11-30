@@ -308,4 +308,72 @@ impl CurvesSchema {
             Ok(None)
         }
     }
+
+    pub fn load_widths_sample(
+        &self,
+        sample_index: u32,
+        reader: &mut dyn ArchiveReader,
+    ) -> Result<Option<Vec<f32>>> {
+        if let Some(width) = &self.width {
+            let array = width.load_sample(sample_index, reader)?;
+            if let PodArray::F32(array) = array {
+                Ok(Some(array))
+            } else {
+                Err(InternalError::Unreachable.into())
+            }
+        } else {
+            Ok(None)
+        }
+    }
+
+    pub fn load_velocities_sample(
+        &self,
+        sample_index: u32,
+        reader: &mut dyn ArchiveReader,
+    ) -> Result<Option<Vec<[f32; 3]>>> {
+        if let Some(velocities) = &self.velocities {
+            let array = velocities.load_sample(sample_index, reader)?;
+            if let PodArray::F32(array) = array {
+                Ok(Some(chunk_vector_by_3(array)?))
+            } else {
+                Err(InternalError::Unreachable.into())
+            }
+        } else {
+            Ok(None)
+        }
+    }
+
+    pub fn load_orders_sample(
+        &self,
+        sample_index: u32,
+        reader: &mut dyn ArchiveReader,
+    ) -> Result<Option<Vec<u8>>> {
+        if let Some(orders) = &self.orders {
+            let array = orders.load_sample(sample_index, reader)?;
+            if let PodArray::U8(array) = array {
+                Ok(Some(array))
+            } else {
+                Err(InternalError::Unreachable.into())
+            }
+        } else {
+            Ok(None)
+        }
+    }
+
+    pub fn load_knots_sample(
+        &self,
+        sample_index: u32,
+        reader: &mut dyn ArchiveReader,
+    ) -> Result<Option<Vec<f32>>> {
+        if let Some(knots) = &self.knots {
+            let array = knots.load_sample(sample_index, reader)?;
+            if let PodArray::F32(array) = array {
+                Ok(Some(array))
+            } else {
+                Err(InternalError::Unreachable.into())
+            }
+        } else {
+            Ok(None)
+        }
+    }
 }
