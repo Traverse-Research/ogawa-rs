@@ -3,7 +3,7 @@ mod curves_schema;
 mod xform_schema;
 
 pub use base_geom_schema::BaseGeomSchema;
-pub use curves_schema::CurvesSchema;
+pub use curves_schema::{BasisType, CurvePeriodicity, CurveType, CurvesSchema, TopologyVariance};
 pub use xform_schema::XformSchema;
 
 use crate::object_reader::ObjectReader;
