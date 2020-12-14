@@ -4,10 +4,10 @@ use thiserror::Error;
 #[derive(Error, Debug)]
 enum Error {
     #[error(transparent)]
-    OgawaError(#[from] OgawaError),
+    Ogawa(#[from] OgawaError),
 
     #[error(transparent)]
-    MinifbError(#[from] minifb::Error),
+    Minifb(#[from] minifb::Error),
 
     #[error(transparent)]
     Other(#[from] anyhow::Error),
@@ -71,16 +71,20 @@ fn load_curves(filepath: &str) -> Result<Vec<Curves>, Error> {
 fn main() -> Result<(), Error> {
     let args = std::env::args().collect::<Vec<String>>();
     if args.len() < 2 {
-        return Err(Error::Other(anyhow::anyhow!("Missing required filename argument.")))
+        return Err(Error::Other(anyhow::anyhow!(
+            "Missing required filename argument."
+        )));
     }
 
     println!("loading archives.");
-    let curves_vec = args[1..].iter().map(|filepath| {
-        Ok(load_curves(filepath)?)
-    }).collect::<Result<Vec<_>, Error>>()?;
-    let curves_vec = curves_vec.iter().flat_map(|curves| {
-        curves.iter()
-    }).collect::<Vec<_>>();
+    let curves_vec = args[1..]
+        .iter()
+        .map(|filepath| Ok(load_curves(filepath)?))
+        .collect::<Result<Vec<_>, Error>>()?;
+    let curves_vec = curves_vec
+        .iter()
+        .flat_map(|curves| curves.iter())
+        .collect::<Vec<_>>();
 
     println!("initializing display");
 

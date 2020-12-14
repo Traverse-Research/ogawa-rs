@@ -160,7 +160,9 @@ fn print_object_structure(reader: &mut dyn ArchiveReader, archive: &Archive) -> 
 fn main() -> ogawa_rs::Result<()> {
     let args = std::env::args().collect::<Vec<String>>();
     if args.len() < 2 {
-        return Err(ogawa_rs::OgawaError::Other(anyhow::anyhow!("Missing required filename argument.")))
+        return Err(ogawa_rs::OgawaError::Other(anyhow::anyhow!(
+            "Missing required filename argument."
+        )));
     }
 
     let mut reader = MemMappedReader::new(&args[1])?;
