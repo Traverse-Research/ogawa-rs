@@ -7,7 +7,7 @@
 [![Banner](banner.png)](https://traverseresearch.nl)
 
 This is a work in progress crate for loading Ogawa Alembic Cache files in Rust.
-It currently only supports basic parsing of file and partially reading curves schemas.
+It currently only supports basic parsing of files and partially reading curves schemas.
 
 
 ### License
