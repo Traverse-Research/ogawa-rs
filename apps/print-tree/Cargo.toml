@@ -8,3 +8,4 @@ edition = "2018"
 
 [dependencies]
 ogawa-rs = { path = "../.." }
+anyhow = "1.0"

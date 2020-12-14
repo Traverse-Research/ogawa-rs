@@ -1,9 +1,12 @@
 use ogawa_rs::*;
 fn main() -> ogawa_rs::Result<()> {
-    let filepath = "test_assets/Eyelashes01.abc";
+    let args = std::env::args().collect::<Vec<String>>();
+    if args.len() < 2 {
+        return Err(ogawa_rs::OgawaError::Other(anyhow::anyhow!("Missing required filename argument.")))
+    }
 
-    let mut reader = MemMappedReader::new(filepath)?;
-    // let mut reader = FileReader::new(filepath)?;
+    let mut reader = MemMappedReader::new(&args[1])?;
+    // let mut reader = FileReader::new(&args[1])?;
 
     let archive = Archive::new(&mut reader)?;
 

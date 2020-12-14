@@ -11,3 +11,4 @@ ogawa-rs = { path = "../.." }
 minifb = "0.19"
 thiserror = "1.0"
 glam = "0.9"
+anyhow = "1.0"
