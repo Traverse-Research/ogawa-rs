@@ -19,7 +19,7 @@ pub use pod::*;
 pub use property::*;
 pub use reader::{ArchiveReader, FileReader, MemMappedReader};
 pub use result::{InternalError, OgawaError, ParsingError, Result, UserError};
-pub use schemas::{CurvesSchema, Schema};
+pub use schemas::{BasisType, CurvePeriodicity, CurveType, CurvesSchema, Schema, TopologyVariance};
 pub use time_sampling::{TimeSampling, TimeSamplingType};
 
 pub struct Archive {
