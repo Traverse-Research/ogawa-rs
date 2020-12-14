@@ -55,6 +55,7 @@ dependencies = [
 name = "curves-test-vis"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "glam",
  "minifb",
  "ogawa-rs",
@@ -246,6 +247,7 @@ checksum = "c36fa947111f5c62a733b652544dd0016a43ce89619538a8ef92724a6f501a20"
 name = "print-tree"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "ogawa-rs",
 ]
 
@@ -451,6 +453,7 @@ dependencies = [
 name = "schema-parsing"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "ogawa-rs",
 ]
 
