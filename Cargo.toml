@@ -3,8 +3,18 @@ name = "ogawa-rs"
 version = "0.1.0"
 authors = ["Traverse Research <info@traverseresearch.nl>"]
 edition = "2018"
+license = "MIT OR Apache-2.0"
+description = "Ogawa Alembic Cache file parser."
+homepage = "https://github.com/Traverse-Research/ogawa-rs"
+repository = "https://github.com/Traverse-Research/ogawa-rs"
+keywords = ["ogawa", "alembic", ".abc"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+include = [
+    "src/**",
+    "Cargo.toml"
+]
 
 [dependencies]
 thiserror = "1.0"
