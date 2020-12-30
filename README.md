@@ -1,5 +1,5 @@
 # ⚗ ogawa-rs
-[![Continuous integration](https://github.com/Traverse-Research/ogawa-rs/workflows/Continuous%20integration/badge.svg)
+![Continuous integration](https://github.com/Traverse-Research/ogawa-rs/workflows/Continuous%20integration/badge.svg)
 [![LICENSE](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE-MIT)
 [![LICENSE](https://img.shields.io/badge/license-apache-blue.svg)](LICENSE-APACHE)
 [![Contributor Covenant](https://img.shields.io/badge/contributor%20covenant-v1.4%20adopted-ff69b4.svg)](../main/CODE_OF_CONDUCT.md)
