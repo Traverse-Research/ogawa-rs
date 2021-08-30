@@ -1,5 +1,7 @@
 # ⚗ ogawa-rs
 ![Continuous integration](https://github.com/Traverse-Research/ogawa-rs/workflows/Continuous%20integration/badge.svg)
+[![Latest version](https://img.shields.io/crates/v/ogawa-rs.svg)](https://crates.io/crates/ogawa-rs)
+[![Docs](https://docs.rs/ogawa-rs/badge.svg)](https://docs.rs/ogawa-rs/)
 [![LICENSE](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE-MIT)
 [![LICENSE](https://img.shields.io/badge/license-apache-blue.svg)](LICENSE-APACHE)
 [![Contributor Covenant](https://img.shields.io/badge/contributor%20covenant-v1.4%20adopted-ff69b4.svg)](../main/CODE_OF_CONDUCT.md)
@@ -9,6 +11,11 @@
 This is a work in progress crate for loading Ogawa Alembic Cache files in Rust.
 It currently only supports basic parsing of files and partially reading curves schemas.
 
+
+```toml
+[dependencies]
+ogawa-rs = "0.1.0"
+```
 
 ### License
 
