@@ -95,7 +95,7 @@ fn main() -> Result<(), Error> {
         minifb::WindowOptions::default(),
     )?;
 
-    let mut camera_pos = glam::const_vec3!([0.0, 6.0, -5.0]);
+    let mut camera_pos = glam::Vec3::new(0.0, 6.0, -5.0);
     let mut camera_rx = 0.0 * std::f32::consts::PI;
     let mut camera_ry = 0.0 * std::f32::consts::PI;
 
@@ -127,24 +127,24 @@ fn main() -> Result<(), Error> {
             camera_ry -= 0.5 * delta;
         }
 
-        let mut movement = glam::Vec3::zero();
+        let mut movement = glam::Vec3::ZERO;
         if window.is_key_down(minifb::Key::W) {
-            movement.set_z(movement.z() + 1.0 * delta);
+            movement.z += 1.0 * delta;
         }
         if window.is_key_down(minifb::Key::S) {
-            movement.set_z(movement.z() - 1.0 * delta);
+            movement.z -= 1.0 * delta;
         }
         if window.is_key_down(minifb::Key::A) {
-            movement.set_x(movement.x() - 1.0 * delta);
+            movement.x -= 1.0 * delta;
         }
         if window.is_key_down(minifb::Key::D) {
-            movement.set_x(movement.x() + 1.0 * delta);
+            movement.x += 1.0 * delta;
         }
         if window.is_key_down(minifb::Key::Q) {
-            movement.set_y(movement.y() - 1.0 * delta);
+            movement.y -= 1.0 * delta;
         }
         if window.is_key_down(minifb::Key::E) {
-            movement.set_y(movement.y() + 1.0 * delta);
+            movement.y += 1.0 * delta;
         }
         let rotation =
             glam::Quat::from_rotation_y(-camera_ry) * glam::Quat::from_rotation_x(-camera_rx);
@@ -160,24 +160,18 @@ fn main() -> Result<(), Error> {
 
         for Curves { positions } in curves_vec.iter() {
             for p in positions.iter() {
-                let p = glam::Vec3::from_slice_unaligned(p) / 25.0;
+                let p = glam::Vec3::from_slice(p) / 25.0;
                 let p = vp * p.extend(1.0);
 
                 // frustum culling
-                if p.x() < -p.w()
-                    || p.x() > p.w()
-                    || p.y() < -p.w()
-                    || p.y() > p.w()
-                    || p.z() < -p.w()
-                    || p.z() > p.w()
-                {
+                if p.x < -p.w || p.x > p.w || p.y < -p.w || p.y > p.w || p.z < -p.w || p.z > p.w {
                     continue;
                 }
-                let p = glam::vec3(p.x() / p.w(), p.y() / p.w(), p.z() / p.w());
+                let p = glam::vec3(p.x / p.w, p.y / p.w, p.z / p.w);
 
                 //to screen coords
-                let ss_x = (p.x() * 0.5 + 0.5) * WINDOW_WIDTH as f32;
-                let ss_y = (p.y() * -0.5 + 0.5) * WINDOW_HEIGHT as f32;
+                let ss_x = (p.x * 0.5 + 0.5) * WINDOW_WIDTH as f32;
+                let ss_y = (p.y * -0.5 + 0.5) * WINDOW_HEIGHT as f32;
 
                 if ss_x >= 0.0
                     && ss_x < WINDOW_WIDTH as f32
