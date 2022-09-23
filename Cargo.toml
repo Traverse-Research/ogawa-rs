@@ -19,9 +19,9 @@ include = [
 [dependencies]
 thiserror = "1.0"
 anyhow = "1.0"
-byteorder = "1.3.4"
-half = "1.6.0"
-vmap = "0.4.2"
+byteorder = "1.4.3"
+half = "2.1.0"
+vmap = "0.5.1"
 
 [workspace]
 members = [
