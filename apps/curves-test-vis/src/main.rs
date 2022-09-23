@@ -79,7 +79,7 @@ fn main() -> Result<(), Error> {
     println!("loading archives.");
     let curves_vec = args[1..]
         .iter()
-        .map(|filepath| Ok(load_curves(filepath)?))
+        .map(|filepath| load_curves(filepath))
         .collect::<Result<Vec<_>, Error>>()?;
     let curves_vec = curves_vec
         .iter()

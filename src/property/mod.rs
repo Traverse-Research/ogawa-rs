@@ -12,7 +12,7 @@ use crate::metadata::MetaData;
 use crate::DataType;
 use crate::TimeSampling;
 
-#[derive(Debug, PartialEq, Clone, Copy)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum PropertyType {
     Array,
     Compound,

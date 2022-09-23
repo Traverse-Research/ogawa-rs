@@ -18,7 +18,7 @@ impl BaseGeomSchema {
             .properties()
             .ok_or(ParsingError::IncompatibleSchema)?;
         let properties: CompoundPropertyReader = properties
-            .load_sub_property(0, reader, &archive)?
+            .load_sub_property(0, reader, archive)?
             .try_into()?;
         Self::new_from_properties(&properties, reader, archive)
     }
@@ -29,7 +29,7 @@ impl BaseGeomSchema {
         archive: &Archive,
     ) -> Result<Self> {
         let self_bounds: ScalarPropertyReader = properties
-            .load_sub_property_by_name(".selfBnds", reader, &archive)?
+            .load_sub_property_by_name(".selfBnds", reader, archive)?
             .ok_or(ParsingError::IncompatibleSchema)?
             .try_into()?;
         if self_bounds.header.data_type != BOX_TYPE {

@@ -18,7 +18,7 @@ impl MetaData {
             let cur_assign = text[last_pair..].find('=').map(|x| x + last_pair);
 
             if let Some(cur_assign) = cur_assign {
-                let cur_pair = cur_pair.unwrap_or_else(|| text.len());
+                let cur_pair = cur_pair.unwrap_or(text.len());
                 let key = text[last_pair..cur_assign].to_owned();
                 let value = if (cur_assign + 1) > cur_pair {
                     ""

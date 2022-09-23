@@ -24,21 +24,21 @@ impl XformSchema {
             .properties()
             .ok_or(ParsingError::IncompatibleSchema)?;
         let properties: CompoundPropertyReader = properties
-            .load_sub_property(0, reader, &archive)?
+            .load_sub_property(0, reader, archive)?
             .try_into()?;
 
         let child_bounds = properties
-            .load_sub_property_by_name_checked(".childBnds", reader, &archive, Some(&BOX_TYPE))?
+            .load_sub_property_by_name_checked(".childBnds", reader, archive, Some(&BOX_TYPE))?
             .map(|x| x.try_into())
             .transpose()?;
 
         let inherits: Option<ScalarPropertyReader> = properties
-            .load_sub_property_by_name_checked(".inherits", reader, &archive, Some(&BOOL_TYPE))?
+            .load_sub_property_by_name_checked(".inherits", reader, archive, Some(&BOOL_TYPE))?
             .map(|x| x.try_into())
             .transpose()?;
 
         let vals = properties
-            .load_sub_property_by_name(".vals", reader, &archive)?
+            .load_sub_property_by_name(".vals", reader, archive)?
             .map(|x| {
                 let _data_type = match &x {
                     PropertyReader::Array(r) => &r.header.data_type,
@@ -106,12 +106,12 @@ impl XformSchema {
         // TODO(max): ops
 
         let arb_geometry_parameters = properties
-            .load_sub_property_by_name(".arbGeomParams", reader, &archive)?
+            .load_sub_property_by_name(".arbGeomParams", reader, archive)?
             .map(|x| -> Result<CompoundPropertyReader> { Ok(x.try_into()?) })
             .transpose()?;
 
         let user_properties = properties
-            .load_sub_property_by_name(".userProperties", reader, &archive)?
+            .load_sub_property_by_name(".userProperties", reader, archive)?
             .map(|x| -> Result<CompoundPropertyReader> { Ok(x.try_into()?) })
             .transpose()?;
 

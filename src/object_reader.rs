@@ -91,14 +91,14 @@ impl ObjectReader {
         let parent_group = &self.group;
         let child_group = parent_group.load_group(reader, index + 1, false)?;
 
-        Ok(ObjectReader::new(
+        ObjectReader::new(
             child_group,
             &self.children[index].full_name,
             reader,
             indexed_meta_data,
             time_samplings,
             self.children[index].clone(),
-        )?)
+        )
     }
 
     pub fn properties(&self) -> Option<&CompoundPropertyReader> {
