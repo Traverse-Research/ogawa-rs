@@ -9,13 +9,13 @@ const ACYCLIC_NUM_SAMPLES: u32 = u32::MAX;
 const ACYCLIC_TIME_PER_CYCLE: f64 = f64::MAX / 32.0;
 #[derive(Debug)]
 pub struct TimeSamplingType {
-    num_samples_per_cycle: u32,
-    time_per_cycle: f64,
+    pub num_samples_per_cycle: u32,
+    pub time_per_cycle: f64,
 }
 #[derive(Debug)]
 pub struct TimeSampling {
-    sampling_type: TimeSamplingType,
-    samples: Vec<f64>,
+    pub sampling_type: TimeSamplingType,
+    pub samples: Vec<f64>,
 }
 
 pub(crate) fn read_time_samplings_and_max(
