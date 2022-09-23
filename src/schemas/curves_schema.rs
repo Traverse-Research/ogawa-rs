@@ -105,7 +105,7 @@ impl CurvesSchema {
             .properties()
             .ok_or(ParsingError::IncompatibleSchema)?;
         let properties: CompoundPropertyReader = properties
-            .load_sub_property(0, reader, &archive)?
+            .load_sub_property(0, reader, archive)?
             .try_into()?;
 
         let base_geom = BaseGeomSchema::new_from_properties(&properties, reader, archive)?;
@@ -233,7 +233,7 @@ impl CurvesSchema {
             return Err(InternalError::Unreachable.into());
         };
 
-        let curve_type = (*pod_array.get(0).ok_or(InternalError::Unreachable)?).try_into()?;
+        let curve_type = (*pod_array.first().ok_or(InternalError::Unreachable)?).try_into()?;
         let periodicity = (*pod_array.get(1).ok_or(InternalError::Unreachable)?).try_into()?;
         let basis_type = (*pod_array.get(2).ok_or(InternalError::Unreachable)?).try_into()?;
 

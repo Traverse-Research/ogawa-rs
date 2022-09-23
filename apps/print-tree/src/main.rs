@@ -91,7 +91,7 @@ fn print_object_structure(reader: &mut dyn ArchiveReader, archive: &Archive) -> 
         let properties = current.properties().unwrap();
         let mut prop_stack = vec![];
         for i in (0..properties.sub_property_count()).rev() {
-            let prop = properties.load_sub_property(i, reader, &archive)?;
+            let prop = properties.load_sub_property(i, reader, archive)?;
             prop_stack.push((1, prop));
         }
 
@@ -104,7 +104,7 @@ fn print_object_structure(reader: &mut dyn ArchiveReader, archive: &Archive) -> 
 
             if let PropertyReader::Compound(properties) = &properties {
                 for i in (0..properties.sub_property_count()).rev() {
-                    let prop = properties.load_sub_property(i, reader, &archive)?;
+                    let prop = properties.load_sub_property(i, reader, archive)?;
 
                     prop_stack.push(((prop_indent + 1), prop));
                 }
