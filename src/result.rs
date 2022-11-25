@@ -65,9 +65,6 @@ pub enum OgawaError {
     IoError(#[from] std::io::Error),
 
     #[error(transparent)]
-    VmapError(#[from] vmap::Error),
-
-    #[error(transparent)]
     Other(#[from] anyhow::Error),
 }
 pub type Result<V, E = OgawaError> = ::std::result::Result<V, E>;

@@ -22,7 +22,7 @@ pub trait ArchiveReader: std::io::Read + std::io::Seek {
 
 pub struct MemMappedReader {
     _file: File,
-    cursor: std::io::Cursor<vmap::Map>,
+    cursor: std::io::Cursor<memmap2::Mmap>,
     size: u64,
 }
 
@@ -43,12 +43,12 @@ impl ArchiveReader for MemMappedReader {
 }
 
 impl MemMappedReader {
-    pub fn new(filepath: &str) -> Result<Self> {
-        let (mmap, mut file) = vmap::Map::with_options().open(filepath)?;
-
+    pub fn new(mut file: std::fs::File) -> Result<Self> {
         let old_pos = file.seek(SeekFrom::Current(0))?;
         let size = file.seek(SeekFrom::End(0))?;
         file.seek(SeekFrom::Start(old_pos))?;
+
+        let mmap = unsafe { memmap2::Mmap::map(&file) }?;
 
         let cursor = std::io::Cursor::new(mmap);
 
@@ -82,8 +82,8 @@ impl ArchiveReader for FileReader {
 }
 
 impl FileReader {
-    pub fn new(filepath: &str) -> Result<FileReader> {
-        let mut file = BufReader::new(std::fs::File::open(filepath)?);
+    pub fn new(file: File) -> Result<FileReader> {
+        let mut file = BufReader::new(file);
 
         let size = file.seek(SeekFrom::End(0))?;
         file.seek(SeekFrom::Start(0))?;

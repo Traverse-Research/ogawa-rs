@@ -161,8 +161,9 @@ fn main() -> anyhow::Result<()> {
     let args = std::env::args().collect::<Vec<String>>();
     anyhow::ensure!(args.len() == 2, "Expecting one filename argument.");
 
-    let mut reader = MemMappedReader::new(&args[1])?;
-    // let mut reader = FileReader::new(&args[1])?;
+    let file = std::fs::File::open(&args[1])?;
+    let mut reader = MemMappedReader::new(file)?;
+    // let mut reader = FileReader::new(file)?;
 
     let archive = Archive::new(&mut reader)?;
 

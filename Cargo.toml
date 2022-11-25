@@ -9,17 +9,14 @@ homepage = "https://github.com/Traverse-Research/ogawa-rs"
 repository = "https://github.com/Traverse-Research/ogawa-rs"
 keywords = ["ogawa", "alembic"]
 
-include = [
-    "src/**",
-    "Cargo.toml"
-]
+include = ["/src"]
 
 [dependencies]
-thiserror = "1.0"
 anyhow = "1.0"
 byteorder = "1.4.3"
 half = "2.1.0"
-vmap = "0.5.1"
+memmap2 = "0.5.8"
+thiserror = "1.0"
 
 [workspace]
 members = [
