@@ -4,11 +4,8 @@ version = "0.1.0"
 authors = ["Max Oomen <max@traverseresearch.nl>"]
 edition = "2018"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
-ogawa-rs = { path = "../.." }
-minifb = "0.23"
-thiserror = "1.0"
-glam = "0.21"
 anyhow = "1.0"
+glam = "0.21"
+minifb = "0.23"
+ogawa-rs = { path = "../.." }
