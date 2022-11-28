@@ -9,8 +9,6 @@ homepage = "https://github.com/Traverse-Research/ogawa-rs"
 repository = "https://github.com/Traverse-Research/ogawa-rs"
 keywords = ["ogawa", "alembic"]
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 include = [
     "src/**",
     "Cargo.toml"

@@ -1,11 +1,8 @@
 use ogawa_rs::*;
-fn main() -> ogawa_rs::Result<()> {
+
+fn main() -> anyhow::Result<()> {
     let args = std::env::args().collect::<Vec<String>>();
-    if args.len() < 2 {
-        return Err(ogawa_rs::OgawaError::Other(anyhow::anyhow!(
-            "Missing required filename argument."
-        )));
-    }
+    anyhow::ensure!(args.len() == 2, "Expecting one filename argument.");
 
     let mut reader = MemMappedReader::new(&args[1])?;
     // let mut reader = FileReader::new(&args[1])?;
@@ -66,12 +63,10 @@ fn main() -> ogawa_rs::Result<()> {
                     );
                 }
             },
-            Err(err) => match err {
-                OgawaError::ParsingError(ParsingError::IncompatibleSchema) => {
-                    println!("no compatible schema")
-                }
-                _ => return Err(err),
-            },
+            Err(OgawaError::ParsingError(ParsingError::IncompatibleSchema)) => {
+                println!("no compatible schema")
+            }
+            Err(err) => return Err(err.into()),
         }
 
         let child_count = current.child_count();

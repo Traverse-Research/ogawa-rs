@@ -52,16 +52,16 @@ impl std::fmt::Display for UserError {
 
 #[derive(Error, Debug)]
 pub enum OgawaError {
-    #[error("Internal error {0}")]
+    #[error("Internal error")]
     InternalError(#[from] InternalError),
 
-    #[error("Parsing error {0}")]
+    #[error("Parsing error")]
     ParsingError(#[from] ParsingError),
 
-    #[error("User error {0}")]
+    #[error("User error")]
     UserError(#[from] UserError),
 
-    #[error("I/O error {0}")]
+    #[error("I/O error")]
     IoError(#[from] std::io::Error),
 
     #[error(transparent)]

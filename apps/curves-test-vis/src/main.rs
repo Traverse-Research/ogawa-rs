@@ -1,17 +1,4 @@
 use ogawa_rs::*;
-use thiserror::Error;
-
-#[derive(Error, Debug)]
-enum Error {
-    #[error(transparent)]
-    Ogawa(#[from] OgawaError),
-
-    #[error(transparent)]
-    Minifb(#[from] minifb::Error),
-
-    #[error(transparent)]
-    Other(#[from] anyhow::Error),
-}
 
 const WINDOW_WIDTH: usize = 1280;
 const WINDOW_HEIGHT: usize = 720;
@@ -20,7 +7,7 @@ struct Curves {
     positions: Vec<[f32; 3]>,
 }
 
-fn load_curves(filepath: &str) -> Result<Vec<Curves>, Error> {
+fn load_curves(filepath: &str) -> Result<Vec<Curves>> {
     println!("loading \"{}\".", filepath);
 
     let mut result = vec![];
@@ -46,10 +33,8 @@ fn load_curves(filepath: &str) -> Result<Vec<Curves>, Error> {
                     result.push(Curves { positions });
                 }
             }
-            Err(err) => match err {
-                OgawaError::ParsingError(ParsingError::IncompatibleSchema) => {}
-                _ => return Err(err.into()),
-            },
+            Err(OgawaError::ParsingError(ParsingError::IncompatibleSchema)) => {}
+            Err(err) => return Err(err),
         }
 
         let child_count = current.child_count();
@@ -68,19 +53,15 @@ fn load_curves(filepath: &str) -> Result<Vec<Curves>, Error> {
     Ok(result)
 }
 
-fn main() -> Result<(), Error> {
+fn main() -> anyhow::Result<()> {
     let args = std::env::args().collect::<Vec<String>>();
-    if args.len() < 2 {
-        return Err(Error::Other(anyhow::anyhow!(
-            "Missing required filename argument."
-        )));
-    }
+    anyhow::ensure!(args.len() > 1, "Expecting one or more filename arguments.");
 
     println!("loading archives.");
     let curves_vec = args[1..]
         .iter()
         .map(|filepath| load_curves(filepath))
-        .collect::<Result<Vec<_>, Error>>()?;
+        .collect::<Result<Vec<_>>>()?;
     let curves_vec = curves_vec
         .iter()
         .flat_map(|curves| curves.iter())
