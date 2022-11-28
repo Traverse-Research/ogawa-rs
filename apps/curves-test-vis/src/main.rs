@@ -12,8 +12,9 @@ fn load_curves(filepath: &str) -> Result<Vec<Curves>> {
 
     let mut result = vec![];
 
-    let mut reader = MemMappedReader::new(filepath)?;
-    // let mut reader = FileReader::new(filepath)?;
+    let file = std::fs::File::open(filepath)?;
+    let mut reader = MemMappedReader::new(file)?;
+    // let mut reader = FileReader::new(file)?;
 
     let archive = Archive::new(&mut reader)?;
 
