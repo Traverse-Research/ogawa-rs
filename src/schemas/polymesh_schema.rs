@@ -24,26 +24,21 @@ impl PolymeshSchema {
         reader: &mut dyn ArchiveReader,
         archive: &Archive,
     ) -> Result<Self> {
-
         let properties = object
             .properties()
             .ok_or(ParsingError::IncompatibleSchema)?;
 
-
         let properties: CompoundPropertyReader = properties
             .load_sub_property(0, reader, archive)?
             .try_into()?;
-
         
         let base_geom = BaseGeomSchema::new_from_properties(&properties, reader, archive)?;
-        
 
         // load required properties
         let vertices: ArrayPropertyReader = properties
             .load_sub_property_by_name_checked("P", reader, archive, Some(&F32X3_TYPE))?
             .ok_or(ParsingError::IncompatibleSchema)?
             .try_into()?;
-
         
         let faceindices: ArrayPropertyReader = properties
             .load_sub_property_by_name_checked(".faceIndices", reader, archive, Some(&I32_TYPE))?
