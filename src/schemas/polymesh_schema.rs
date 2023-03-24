@@ -15,7 +15,6 @@ pub struct PolymeshSchema {
     pub vertices: ArrayPropertyReader,
     pub normals: Option<ArrayPropertyReader>,
     pub uv: Option<CompoundPropertyReader>,
-    // pub facesets: Option<ArrayPropertyReader>,
     pub velocities: Option<ArrayPropertyReader>
 }
 
@@ -66,11 +65,6 @@ impl PolymeshSchema {
             .load_sub_property_by_name("uv", reader, archive)?
             .map(|x| -> Result<CompoundPropertyReader> { Ok(x.try_into()?) })
             .transpose()?;
-
-        // let facesets = properties
-        //     .load_sub_property_by_name_checked("facesets", reader, archive, Some(&F32X3_TYPE))?
-        //     .map(|x| x.try_into())
-        //     .transpose()?;
         
         let velocities = properties
             .load_sub_property_by_name_checked("velocities", reader, archive, Some(&F32X3_TYPE))?
@@ -95,9 +89,6 @@ impl PolymeshSchema {
     pub fn has_uv(&self) -> bool {
         self.uv.is_some()
     }
-    // pub fn has_facesets(&self) -> bool {
-    //     self.facesets.is_some()
-    // }
     pub fn has_velocities(&self) -> bool {
         self.velocities.is_some()
     }
