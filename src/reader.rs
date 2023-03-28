@@ -44,7 +44,7 @@ impl ArchiveReader for MemMappedReader {
 
 impl MemMappedReader {
     pub fn new(mut file: std::fs::File) -> Result<Self> {
-        let old_pos = file.seek(SeekFrom::Current(0))?;
+        let old_pos = file.stream_position()?;
         let size = file.seek(SeekFrom::End(0))?;
         file.seek(SeekFrom::Start(old_pos))?;
 
