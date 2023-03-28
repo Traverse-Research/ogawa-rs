@@ -81,9 +81,11 @@ impl PolymeshSchema {
     pub fn has_normals(&self) -> bool {
         self.normals.is_some()
     }
+
     pub fn has_uv(&self) -> bool {
         self.uv.is_some()
     }
+
     pub fn has_velocities(&self) -> bool {
         self.velocities.is_some()
     }
