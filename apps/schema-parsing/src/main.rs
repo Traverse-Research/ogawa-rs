@@ -63,7 +63,7 @@ fn main() -> anyhow::Result<()> {
                         xform.is_constant_identity()
                     );
                 }
-                Schema::Polymesh(polymesh) => {
+                Schema::PolyMesh(polymesh) => {
                     println!("polymesh schema.");
                     println!("\tpolymesh.has_uv() -> {}", polymesh.has_uv());
                     println!("\tpolymesh.has_normals() -> {}", polymesh.has_normals());

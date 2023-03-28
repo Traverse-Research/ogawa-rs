@@ -8,7 +8,7 @@ use crate::Archive;
 pub use std::convert::TryInto;
 
 #[derive(Debug)]
-pub struct PolymeshSchema {
+pub struct PolyMeshSchema {
     base_geom: BaseGeomSchema,
     pub facecounts: ArrayPropertyReader,
     pub faceindices: ArrayPropertyReader,
@@ -18,7 +18,7 @@ pub struct PolymeshSchema {
     pub velocities: Option<ArrayPropertyReader>
 }
 
-impl PolymeshSchema {
+impl PolyMeshSchema {
     pub fn new_from_object_reader(
         object: &ObjectReader,
         reader: &mut dyn ArchiveReader,

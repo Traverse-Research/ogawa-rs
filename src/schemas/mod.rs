@@ -6,7 +6,7 @@ mod polymesh_schema;
 pub use base_geom_schema::BaseGeomSchema;
 pub use curves_schema::{BasisType, CurvePeriodicity, CurveType, CurvesSchema, TopologyVariance};
 pub use xform_schema::XformSchema;
-pub use polymesh_schema::PolymeshSchema;
+pub use polymesh_schema::PolyMeshSchema;
 
 use crate::object_reader::ObjectReader;
 use crate::reader::ArchiveReader;
@@ -20,7 +20,7 @@ pub enum Schema {
     BaseGeom(Box<BaseGeomSchema>),
     Curves(Box<CurvesSchema>),
     Xform(Box<XformSchema>),
-    Polymesh(Box<PolymeshSchema>)
+    PolyMesh(Box<PolyMeshSchema>)
 }
 
 impl Schema {
@@ -64,8 +64,8 @@ impl Schema {
             "AbcGeom_GeomBase_v1" => Ok(Schema::BaseGeom(Box::new(
                 BaseGeomSchema::new_from_object_reader(object, reader, archive)?,
             ))),
-            "AbcGeom_PolyMesh_v1" => Ok(Schema::Polymesh(Box::new(
-                PolymeshSchema::new_from_object_reader(object, reader, archive)?,
+            "AbcGeom_PolyMesh_v1" => Ok(Schema::PolyMesh(Box::new(
+                PolyMeshSchema::new_from_object_reader(object, reader, archive)?,
             ))),
             "AbcGeom_SubD_v1" => {
                 println!("AbcGeom_SubD_v1 schema not yet implemented.");
