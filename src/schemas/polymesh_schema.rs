@@ -15,7 +15,7 @@ pub struct PolyMeshSchema {
     pub vertices: ArrayPropertyReader,
     pub normals: Option<ArrayPropertyReader>,
     pub uv: Option<CompoundPropertyReader>,
-    pub velocities: Option<ArrayPropertyReader>
+    pub velocities: Option<ArrayPropertyReader>,
 }
 
 impl PolyMeshSchema {
@@ -31,7 +31,7 @@ impl PolyMeshSchema {
         let properties: CompoundPropertyReader = properties
             .load_sub_property(0, reader, archive)?
             .try_into()?;
-        
+
         let base_geom = BaseGeomSchema::new_from_properties(&properties, reader, archive)?;
 
         // load required properties
@@ -39,28 +39,28 @@ impl PolyMeshSchema {
             .load_sub_property_by_name_checked("P", reader, archive, Some(&F32X3_TYPE))?
             .ok_or(ParsingError::IncompatibleSchema)?
             .try_into()?;
-        
+
         let faceindices: ArrayPropertyReader = properties
             .load_sub_property_by_name_checked(".faceIndices", reader, archive, Some(&I32_TYPE))?
             .ok_or(ParsingError::IncompatibleSchema)?
             .try_into()?;
-        
+
         let facecounts: ArrayPropertyReader = properties
-        .load_sub_property_by_name_checked(".faceCounts", reader, archive, Some(&I32_TYPE))?
-        .ok_or(ParsingError::IncompatibleSchema)?
-        .try_into()?;        
+            .load_sub_property_by_name_checked(".faceCounts", reader, archive, Some(&I32_TYPE))?
+            .ok_or(ParsingError::IncompatibleSchema)?
+            .try_into()?;
 
         // load optional properties
         let normals = properties
             .load_sub_property_by_name_checked("N", reader, archive, Some(&F32X3_TYPE))?
             .map(|x| x.try_into())
             .transpose()?;
-        
+
         let uv = properties
             .load_sub_property_by_name("uv", reader, archive)?
             .map(|x| -> Result<CompoundPropertyReader> { Ok(x.try_into()?) })
             .transpose()?;
-        
+
         let velocities = properties
             .load_sub_property_by_name_checked("velocities", reader, archive, Some(&F32X3_TYPE))?
             .map(|x| x.try_into())
@@ -73,7 +73,7 @@ impl PolyMeshSchema {
             vertices,
             normals,
             uv,
-            velocities
+            velocities,
         })
     }
 
@@ -108,7 +108,7 @@ impl PolyMeshSchema {
         } else {
             return Err(InternalError::Unreachable.into());
         };
-        
+
         Ok(chunk_vector_by_3(pod_array)?)
     }
 

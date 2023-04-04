@@ -1,12 +1,12 @@
 mod base_geom_schema;
 mod curves_schema;
-mod xform_schema;
 mod polymesh_schema;
+mod xform_schema;
 
 pub use base_geom_schema::BaseGeomSchema;
 pub use curves_schema::{BasisType, CurvePeriodicity, CurveType, CurvesSchema, TopologyVariance};
-pub use xform_schema::XformSchema;
 pub use polymesh_schema::PolyMeshSchema;
+pub use xform_schema::XformSchema;
 
 use crate::object_reader::ObjectReader;
 use crate::reader::ArchiveReader;
@@ -20,7 +20,7 @@ pub enum Schema {
     BaseGeom(Box<BaseGeomSchema>),
     Curves(Box<CurvesSchema>),
     Xform(Box<XformSchema>),
-    PolyMesh(Box<PolyMeshSchema>)
+    PolyMesh(Box<PolyMeshSchema>),
 }
 
 impl Schema {

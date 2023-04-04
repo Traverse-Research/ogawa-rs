@@ -67,7 +67,10 @@ fn main() -> anyhow::Result<()> {
                     println!("polymesh schema.");
                     println!("\tpolymesh.has_uv() -> {}", polymesh.has_uv());
                     println!("\tpolymesh.has_normals() -> {}", polymesh.has_normals());
-                    println!("\tpolymesh.has_velocities() -> {}", polymesh.has_velocities());
+                    println!(
+                        "\tpolymesh.has_velocities() -> {}",
+                        polymesh.has_velocities()
+                    );
 
                     let n_vertices = polymesh.load_vertices_sample(0, &mut reader)?;
                     println!("\tnumber of vertices: {}", n_vertices.len());
