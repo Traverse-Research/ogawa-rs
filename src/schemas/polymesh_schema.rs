@@ -77,7 +77,6 @@ impl PolyMeshSchema {
         })
     }
 
-
     pub fn has_normals(&self) -> bool {
         self.normals.is_some()
     }
@@ -89,7 +88,6 @@ impl PolyMeshSchema {
     pub fn has_velocities(&self) -> bool {
         self.velocities.is_some()
     }
-
 
     pub fn load_bounds_sample(
         &self,
