@@ -1,9 +1,11 @@
 mod base_geom_schema;
 mod curves_schema;
+mod polymesh_schema;
 mod xform_schema;
 
 pub use base_geom_schema::BaseGeomSchema;
 pub use curves_schema::{BasisType, CurvePeriodicity, CurveType, CurvesSchema, TopologyVariance};
+pub use polymesh_schema::PolyMeshSchema;
 pub use xform_schema::XformSchema;
 
 use crate::object_reader::ObjectReader;
@@ -18,6 +20,7 @@ pub enum Schema {
     BaseGeom(Box<BaseGeomSchema>),
     Curves(Box<CurvesSchema>),
     Xform(Box<XformSchema>),
+    PolyMesh(Box<PolyMeshSchema>),
 }
 
 impl Schema {
@@ -61,10 +64,9 @@ impl Schema {
             "AbcGeom_GeomBase_v1" => Ok(Schema::BaseGeom(Box::new(
                 BaseGeomSchema::new_from_object_reader(object, reader, archive)?,
             ))),
-            "AbcGeom_PolyMesh_v1" => {
-                println!("AbcGeom_PolyMesh_v1 schema not yet implemented.");
-                Err(ParsingError::UnsupportedAlembicFile.into())
-            }
+            "AbcGeom_PolyMesh_v1" => Ok(Schema::PolyMesh(Box::new(
+                PolyMeshSchema::new_from_object_reader(object, reader, archive)?,
+            ))),
             "AbcGeom_SubD_v1" => {
                 println!("AbcGeom_SubD_v1 schema not yet implemented.");
                 Err(ParsingError::UnsupportedAlembicFile.into())

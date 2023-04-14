@@ -63,6 +63,18 @@ fn main() -> anyhow::Result<()> {
                         xform.is_constant_identity()
                     );
                 }
+                Schema::PolyMesh(polymesh) => {
+                    println!("polymesh schema.");
+                    println!("\tpolymesh.has_uv() -> {}", polymesh.has_uv());
+                    println!("\tpolymesh.has_normals() -> {}", polymesh.has_normals());
+                    println!(
+                        "\tpolymesh.has_velocities() -> {}",
+                        polymesh.has_velocities()
+                    );
+
+                    let n_vertices = polymesh.load_vertices_sample(0, &mut reader)?;
+                    println!("\tnumber of vertices: {}", n_vertices.len());
+                }
             },
             Err(OgawaError::ParsingError(ParsingError::IncompatibleSchema)) => {
                 println!("no compatible schema")
