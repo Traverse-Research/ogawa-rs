@@ -89,7 +89,7 @@ impl GroupChunk {
                 let child_pos = reader.read_u64::<LittleEndian>()?;
 
                 if (child_pos & EMPTY_DATA) == 0 {
-                    Ok(GroupChunk::load(child_pos, is_light, reader)?)
+                    GroupChunk::load(child_pos, is_light, reader)
                 } else {
                     Err(InternalError::DataChunkReadAsGroupChunk.into())
                 }
@@ -97,7 +97,7 @@ impl GroupChunk {
                 Err(InternalError::OutOfBounds.into())
             }
         } else if is_group(self.children[index]) {
-            Ok(GroupChunk::load(self.children[index], is_light, reader)?)
+            GroupChunk::load(self.children[index], is_light, reader)
         } else {
             Err(InternalError::DataChunkReadAsGroupChunk.into())
         }
@@ -109,7 +109,7 @@ impl GroupChunk {
                 reader.seek(SeekFrom::Start(self.position + 8 * (index as u64) + 8))?;
                 let child_pos = reader.read_u64::<LittleEndian>()?;
                 if (child_pos & EMPTY_DATA) != 0 {
-                    Ok(DataChunk::load(child_pos, reader)?)
+                    DataChunk::load(child_pos, reader)
                 } else {
                     Err(InternalError::GroupChunkReadAsDataChunk.into())
                 }
@@ -117,7 +117,7 @@ impl GroupChunk {
                 Err(InternalError::OutOfBounds.into())
             }
         } else if is_data(self.children[index]) {
-            Ok(DataChunk::load(self.children[index], reader)?)
+            DataChunk::load(self.children[index], reader)
         } else {
             Err(InternalError::GroupChunkReadAsDataChunk.into())
         }
