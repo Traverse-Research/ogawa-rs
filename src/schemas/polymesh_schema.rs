@@ -59,6 +59,7 @@ impl PolyMeshSchema {
         let uv = properties
             .load_sub_property_by_name("uv", reader, archive)?
             .map(|x| x.try_into())
+
             .transpose()?;
 
         let velocities = properties

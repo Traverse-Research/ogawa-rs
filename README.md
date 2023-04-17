@@ -14,7 +14,7 @@ It currently only supports basic parsing of files and partially reading curves s
 
 ```toml
 [dependencies]
-ogawa-rs = "0.3.0"
+ogawa-rs = "0.4.0"
 ```
 
 ### License
