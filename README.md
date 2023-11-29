@@ -1,10 +1,11 @@
 # ⚗ ogawa-rs
-![Continuous integration](https://github.com/Traverse-Research/ogawa-rs/workflows/Continuous%20integration/badge.svg)
-[![Latest version](https://img.shields.io/crates/v/ogawa-rs.svg)](https://crates.io/crates/ogawa-rs)
+[![Actions Status](https://github.com/Traverse-Research/ogawa-rs/actions/workflows/ci.yml/badge.svg)](https://github.com/Traverse-Research/rust-template/actions)
+[![Latest version](https://img.shields.io/crates/v/ogawa-rs.svg?logo=rust)](https://crates.io/crates/ogawa-rs)
 [![Docs](https://docs.rs/ogawa-rs/badge.svg)](https://docs.rs/ogawa-rs/)
 [![LICENSE](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE-MIT)
 [![LICENSE](https://img.shields.io/badge/license-apache-blue.svg)](LICENSE-APACHE)
-[![Contributor Covenant](https://img.shields.io/badge/contributor%20covenant-v1.4%20adopted-ff69b4.svg)](../main/CODE_OF_CONDUCT.md)
+[![MSRV](https://img.shields.io/badge/rustc-1.74.0+-ab6000.svg)](https://blog.rust-lang.org/2023/11/16/Rust-1.74.0.html)
+[![Contributor Covenant](https://img.shields.io/badge/contributor%20covenant-v1.4%20adopted-ff69b4.svg)](./CODE_OF_CONDUCT.md)
 
 [![Banner](banner.png)](https://traverseresearch.nl)
 

@@ -1,10 +1,13 @@
-
 pre-release-commit-message = "Release {{version}}"
 tag-message = "Release {{version}}"
 tag-name = "{{version}}"
 sign-commit = true
 sign-tag = true
 publish = false
+
+pre-release-replacements = [
+  { file = "README.md", search = "ogawa-rs = .*", replace = "{{crate_name}} = \"{{version}}\"" },
+]
 
 # cargo-release only allows using {{version}} in the commit title when creating one
 # commit across all released packages in this workspace (we only release one package
@@ -13,7 +16,3 @@ publish = false
 # https://github.com/crate-ci/cargo-release/commit/3af94caa4b9bbee010a5cf3f196cc4afffbaf192
 consolidate-commits = false
 shared-version = true
-
-pre-release-replacements = [
-  {file="README.md", search="ogawa-rs = .*", replace="{{crate_name}} = \"{{version}}\""},
-]

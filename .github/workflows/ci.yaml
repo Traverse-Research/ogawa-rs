@@ -10,44 +10,29 @@ jobs:
         os: [ubuntu-latest, windows-latest]
     runs-on: ${{ matrix.os }}
     steps:
-      - name: Install xkbcommon-sys
-        if: runner.os == 'Linux'
-        run: |
-          sudo apt update
-          sudo apt install libxkbcommon-dev
-      - uses: actions/checkout@v2
-      - uses: actions/cache@v2
-        with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            target
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-cargo-
-            ${{ runner.os }}-
+      - uses: actions/checkout@v4
       - run: cargo check --workspace --all-targets
+
+  check-msrv:
+    name: Build-test MSRV (1.74) with minal crate dependencies
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@nightly
+      - name: Generate minimal-version dependencies
+        run: cargo -Zminimal-versions generate-lockfile
+      - uses: dtolnay/rust-toolchain@1.74.0
+      - name: Cargo check
+        run: cargo check --workspace --all-targets
 
   lint:
     name: Lint
     runs-on: ubuntu-latest
     steps:
-      - name: Install xkbcommon-sys
-        if: runner.os == 'Linux'
-        run: |
-          sudo apt update
-          sudo apt install libxkbcommon-dev
-      - uses: actions/checkout@v2
-      - uses: actions/cache@v2
-        with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            target
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-cargo-
-            ${{ runner.os }}-
+      - uses: actions/checkout@v4
       - run: cargo fmt --all -- --check
       - run: cargo clippy --workspace --all-targets -- -D warnings
 
@@ -55,21 +40,5 @@ jobs:
     name: Run unit tests
     runs-on: ubuntu-latest
     steps:
-      - name: Install xkbcommon-sys
-        if: runner.os == 'Linux'
-        run: |
-          sudo apt update
-          sudo apt install libxkbcommon-dev
-      - uses: actions/checkout@v2
-      - uses: actions/cache@v2
-        with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            target
-          key: ${{ runner.os }}-cargo-test-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-cargo-test-
-            ${{ runner.os }}-cargo-
-            ${{ runner.os }}-
+      - uses: actions/checkout@v4
       - run: cargo test --workspace --all-targets
