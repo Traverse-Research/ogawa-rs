@@ -7,5 +7,5 @@ edition = "2018"
 [dependencies]
 anyhow = "1.0"
 glam = "0.21"
-minifb = "0.23"
+minifb = "0.25"
 ogawa-rs = { path = "../.." }
