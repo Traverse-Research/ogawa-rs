@@ -107,12 +107,12 @@ impl XformSchema {
 
         let arb_geometry_parameters = properties
             .load_sub_property_by_name(".arbGeomParams", reader, archive)?
-            .map(|x| -> Result<CompoundPropertyReader> { Ok(x.try_into()?) })
+            .map(|x| x.try_into())
             .transpose()?;
 
         let user_properties = properties
             .load_sub_property_by_name(".userProperties", reader, archive)?
-            .map(|x| -> Result<CompoundPropertyReader> { Ok(x.try_into()?) })
+            .map(|x| x.try_into())
             .transpose()?;
 
         Ok(Self {
