@@ -19,9 +19,6 @@ half = "2"
 memmap2 = "0.5"
 thiserror = "1.0.7"
 
-[workspace]
-members = [
-    "apps/schema-parsing",
-    "apps/print-tree",
-    "apps/curves-test-vis",
-]
+[dev-dependencies]
+glam = "0.21"
+minifb = "0.25"
