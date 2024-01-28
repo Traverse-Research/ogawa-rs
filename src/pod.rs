@@ -63,7 +63,7 @@ impl TryFrom<u32> for PodType {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum PodArray {
     Boolean(Vec<bool>),
     U8(Vec<u8>),
@@ -88,8 +88,8 @@ pub enum PodArray {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct DataType {
-    pub(crate) pod_type: PodType,
-    pub(crate) extent: u8,
+    pub pod_type: PodType,
+    pub extent: u8,
 }
 
 pub fn chunk_vector_by_2<T>(mut vector: Vec<T>) -> Result<Vec<[T; 2]>, InternalError> {
