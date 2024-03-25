@@ -20,5 +20,5 @@ memmap2 = "0.9"
 thiserror = "1.0.7"
 
 [dev-dependencies]
-glam = "0.25"
+glam = "0.27"
 minifb = "0.25"
