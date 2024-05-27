@@ -21,4 +21,4 @@ thiserror = "1.0.7"
 
 [dev-dependencies]
 glam = "0.25"
-minifb = "0.25"
+minifb = "0.27"
